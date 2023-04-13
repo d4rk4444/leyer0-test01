@@ -155,17 +155,16 @@ const circeBTCBridge = async(privateKey) => {
         try {
             await getAmountToken(info.rpcOptimism, info.BTCb, address).then(async(balanceBTCb) => {
                 if (balanceBTCb == 0) {
-                    console.log(chalk.yellow(`Wait for BTCb on Optimism [~2min : Update every 1min]`));
+                    console.log(`Wait for BTCb on Optimism [~2min : Update every 1min]`);
                     logger.log(`Wait for BTCb on Optimism [~2min : Update every 1min]`);
                     await timeout(60000);
                 } else if (balanceBTCb > 0) {
-                    console.log(chalk.yellow(`Start send ${balanceBTCb / 10**6}BTCb to Arbitrum`));
+                    console.log(chalk.magentaBright(`Start send ${balanceBTCb / 10**6}BTCb to Arbitrum`));
                     logger.log(`Start send ${balanceBTCb / 10**6}BTCb to Arbitrum`);
                     await feeBridgeBTC(info.rpcOptimism, 110, balanceBTCb, info.BTCb, 2, 3000000, 0, address).then(async(bridgeFee) => {
                         await lzAdapterParamsToBytes(2, 3000000, 0, address).then(async(adapterParams) => {
                             await dataBridgeBTC(info.rpcOptimism, balanceBTCb, 110, adapterParams, bridgeFee, info.BTCb, address).then(async(res) => {
                                 await getGasPrice(info.rpcOptimism).then(async(gasPrice) => {
-                                    console.log(gasPrice)
                                     gasPrice = (parseFloat(gasPrice * 1.5)).toString();
                                     await sendOptimismTX(info.rpcOptimism, res.estimateGas, gasPrice, info.BTCb, bridgeFee, res.encodeABI, privateKey);
                                     isReady = true;
@@ -185,6 +184,22 @@ const circeBTCBridge = async(privateKey) => {
             }
             await timeout(pauseTime);
         }
+    }
+
+    isReady = false;
+    while(!isReady) {
+        //CHECK BTCB ON ARBITRUM
+        await getAmountToken(info.rpcArbitrum, info.BTCb, address).then(async(balanceBTCb) => {
+            if (balanceBTCb == 0) {
+                console.log(`Wait for BTCb on Arbitrum [~2min : Update every 1min]`);
+                logger.log(`Wait for BTCb on Arbitrum [~2min : Update every 1min]`);
+                await timeout(60000);
+            } else if (balanceBTCb > 0) {
+                console.log(chalk.magentaBright(`Receiving ${balanceBTCb/10**6}BTCb on Arbitrum was successful`));
+                logger.log(`Receiving ${balanceBTCb/10**6}BTCb on Arbitrum was successful`);
+                isReady = true;
+            }
+        });
     }
 
     return true;
@@ -237,17 +252,18 @@ const circeETHBridge = async(privateKey) => {
 
         try {
             await getETHAmount(info.rpcOptimism, address).then(async(balanceETH) => {
-                if (balanceETH < 0.01 * 10**18) {
-                    console.log(chalk.yellow(`Wait for ETH on Optimism [~2min : Update every 1min]`));
+                if (balanceETH < process.env.AMOUNT_TO_START * 10**18) {
+                    console.log(`Wait for ETH on Optimism [~2min : Update every 1min]`);
                     logger.log(`Wait for ETH on Optimism [~2min : Update every 1min]`);
                     await timeout(60000);
-                } else if (balanceETH >= 0.05 * 10**18) {
-                    console.log(chalk.yellow(`Start send ${balanceETH / 10**18}ETH to Arbitrum`));
-                    logger.log(`Start send ${balanceETH / 10**18}ETH to Arbitrum`);
+                } else if (balanceETH >= process.env.AMOUNT_TO_START * 10**18) {
                     await feeBridgeStargate(info.rpcOptimism, 110, info.StargateRouterOptimism, 0, 0, address).then(async(bridgeFee) => {
                         amountETH = parseInt(
                             multiply(balanceETH, generateRandomAmount(process.env.PERCENT_BRIDGE_MIN / 100, process.env.PERCENT_BRIDGE_MIN / 100, 3))
                         );
+                        console.log(chalk.magentaBright(`Start send ${amountETH / 10**18}ETH to Arbitrum`));
+                        logger.log(`Start send ${amountETH / 10**18}ETH to Arbitrum`);
+
                         const value = add(amountETH, bridgeFee);
                         await dataBridgeETH(info.rpcOptimism, 110, amountETH, value, info.ETHRouterOptimism, address).then(async(res) => {
                             await getGasPrice(info.rpcOptimism).then(async(gasPrice) => {
@@ -269,6 +285,22 @@ const circeETHBridge = async(privateKey) => {
             }
             await timeout(pauseTime);
         }
+    }
+
+    isReady = false;
+    while(!isReady) {
+        //CHECK ETH ON ARBITRUM
+        await getETHAmount(info.rpcArbitrum, address).then(async(balanceETH) => {
+            if (balanceETH < process.env.AMOUNT_TO_START * 10**18) {
+                console.log(chalk`Wait for ETH on Arbitrum [~2min : Update every 1min]`);
+                logger.log(`Wait for ETH on Arbitrum [~2min : Update every 1min]`);
+                await timeout(60000);
+            } else if (balanceETH >= process.env.AMOUNT_TO_START * 10**18) {
+                console.log(chalk.magentaBright(`Receiving ${balanceETH/10**18}ETH on Arbitrum was successful`));
+                logger.log(`Receiving ${balanceETH/10**18}ETH on Arbitrum was successful`);
+                isReady = true;
+            }
+        });
     }
 
     return true;
@@ -409,7 +441,6 @@ const bridgeETHToArbitrum = async(privateKey) => {
 
 (async() => {
     const wallet = parseFile('private.txt');
-    await getAllFeeOptimism(wallet[0]);
     const allStage = [
         'Send All FEE to Optimism',
         'Bridge BTC Arbitrum -> Optimism -> Arbitrum',
@@ -419,6 +450,7 @@ const bridgeETHToArbitrum = async(privateKey) => {
         'Bridge BTC from Optimism to Arbitrum',
         'Bridge ETH from Arbitrum to Optimism',
         'Bridge ETH from Optimism to Arbitrumn',
+        'Random Bridge BTC/ETH Arbitrum -> Optimism -> Arbitrum'
     ];
 
     const index = readline.keyInSelect(allStage, 'Choose stage!');
@@ -448,6 +480,15 @@ const bridgeETHToArbitrum = async(privateKey) => {
             await bridgeETHToOptimism(wallet[i]);
         } else if (index == 7) {
             await bridgeETHToArbitrum(wallet[i]);
+        } else if (index == 8) {
+            const numberCircle = generateRandomAmount(process.env.NUMBER_CIRCLES_MIN, process.env.NUMBER_CIRCLES_MAX, 0);
+            const mainPart = [circeBTCBridge, circeETHBridge];
+            for(let i = 0; i < numberCircle; i++) {
+                shuffle(mainPart);
+                for (let s = 0; s < mainPart.length; s++) {
+                    await mainPart[s](wallet[i]);
+                }
+            }
         }
 
         await timeout(pauseWalletTime);
