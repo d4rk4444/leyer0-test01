@@ -54,7 +54,7 @@ export const dataTraderSwapETHToToken = async(rpc, tokenB, addressLP, amountIn, 
     return { encodeABI, estimateGas };
 }
 
-export const dataSpaceSwapTokenToETH = async(rpc, tokenB, addressLP, amountIn, sender, slippage) => {
+export const dataTraderSwapTokenToETH = async(rpc, tokenB, addressLP, amountIn, sender, slippage) => {
     const w3 = new Web3(new Web3.providers.HttpProvider(rpc));
     const contract = new w3.eth.Contract(traderJoeAbi, info.traderJoeArbitrumRouter);
 
@@ -74,4 +74,3 @@ export const dataSpaceSwapTokenToETH = async(rpc, tokenB, addressLP, amountIn, s
     const estimateGas = await data.estimateGas({ from: sender });
     return { encodeABI, estimateGas };
 }
-

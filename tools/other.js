@@ -12,8 +12,12 @@ export const info = {
     explorerOptimism: 'https://optimistic.etherscan.io/tx/',
     traderJoeArbitrumRouter: '0xb4315e873dBcf96Ffd0acd8EA43f689D8c20fB30',
     WETHArbitrum: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
-    BTCBArbitrum: '0x2297aEbD383787A160DD0d9F71508148769342E3',
+    BTCb: '0x2297aEbD383787A160DD0d9F71508148769342E3',
     WETHBTCBLPArbitrum: '0xdF34e7548AF638cC37b8923ef1139EA98644735a',
+    StargateRouterArbitrum: '0x53Bf833A5d6c4ddA888F69c22C88C9f356a41614',
+    StargateRouterOptimism: '0xB0D502E938ed5f4df2E681fE6E419ff29631d62b',
+    ETHRouterArbitrum: '0xbf22f0f184bCcbeA268dF387a49fF5238dD23E40',
+    ETHRouterOptimism: '0xB49c4e680174E331CB0A7fF3Ab58afC9738d5F8b',
     approveAmount: '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
 }
 

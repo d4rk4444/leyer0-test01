@@ -128,3 +128,94 @@ export const traderJoeAbi = [
         ]
     },
 ]
+
+export const bridgeBTCAbi = [
+    {
+        "type":"function",
+        "name":"sendFrom",
+        "inputs": [
+            {"name":"_from","type":"address"},
+            {"name":"_dstChainId","type":"uint16"},
+            {"name":"_toAddress","type":"bytes32"},
+            {"name":"_amount","type":"uint256"},
+            {"name":"_minAmount","type":"uint256"},
+            {
+                "name":"_callParams",
+                "type":"tuple",
+                "components": [{
+                    "name": "refundAddress",
+                    "type": "address"
+                },
+                {
+                    "name": "zroPaymentAddress",
+                    "type": "address"
+                },
+                {
+                    "name": "adapterParams",
+                    "type": "bytes"
+                }]
+            }
+        ]
+    },
+    {
+        "type":"function",
+        "name":"estimateSendAndCallFee",
+        "inputs": [
+            {"name":"_dstChainId","type":"uint16"},
+            {"name":"_toAddress","type":"bytes32"},
+            {"name":"_amount","type":"uint256"},
+            {"name":"_payload","type":"bytes"},
+            {"name":"_dstGasForCall","type":"uint64"},
+            {"name":"_useZro","type":"bool"},
+            {"name":"_adapterParams","type":"bytes"}
+        ],
+        "outputs": [
+            {"name":"nativeFee","type":"uint256"},
+            {"name":"zroFee","type":"uint256"}
+        ]
+    }
+]
+
+export const bridgeStargateAbi = [
+    {
+        "type":"function",
+        "name":"quoteLayerZeroFee",
+        "inputs": [
+            {"name":"_dstChainId","type":"uint16"},
+            {"name":"_functionType","type":"uint8"},
+            {"name":"_toAddress","type":"bytes"},
+            {"name":"_transferAndCallPayload","type":"bytes"},
+            {
+                "name":"_lzTxParams",
+                "type":"tuple",
+                "components": [{
+                    "name": "dstGasForCall",
+                    "type": "uint256"
+                },
+                {
+                    "name": "dstNativeAmount",
+                    "type": "uint256"
+                },
+                {
+                    "name": "dstNativeAddr",
+                    "type": "bytes"
+                }]
+            }
+        ],
+        "outputs": [
+            {"name":"nativeFee","type":"uint256"},
+            {"name":"zroFee","type":"uint256"}
+        ]
+    },
+    {
+        "type":"function",
+        "name":"swapETH",
+        "inputs": [
+            {"name":"_dstChainId","type":"uint16"},
+            {"name":"_refundAddress","type":"address"},
+            {"name":"_toAddress","type":"bytes"},
+            {"name":"_amountLD","type":"uint256"},
+            {"name":"_minAmountLD","type":"uint256"},
+        ],
+    },
+]
