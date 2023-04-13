@@ -241,7 +241,7 @@ const circeETHBridge = async(privateKey) => {
                     console.log(chalk.yellow(`Wait for ETH on Optimism [~2min : Update every 1min]`));
                     logger.log(`Wait for ETH on Optimism [~2min : Update every 1min]`);
                     await timeout(60000);
-                } else if (balanceETH >= 0.01 * 10**18) {
+                } else if (balanceETH >= 0.05 * 10**18) {
                     console.log(chalk.yellow(`Start send ${balanceETH / 10**18}ETH to Arbitrum`));
                     logger.log(`Start send ${balanceETH / 10**18}ETH to Arbitrum`);
                     await feeBridgeStargate(info.rpcOptimism, 110, info.StargateRouterOptimism, 0, 0, address).then(async(bridgeFee) => {
