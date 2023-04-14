@@ -86,7 +86,7 @@ const circeBTCBridge = async(privateKey) => {
                 try {
                     await dataTraderSwapETHToToken(info.rpcArbitrum, info.BTCb, info.WETHBTCBLPArbitrum, amountETH, address, slippage).then(async(res) => {
                         await getGasPrice(info.rpcArbitrum).then(async(gasPrice) => {
-                            await sendArbitrumTX(info.rpcArbitrum, res.estimateGas, gasPrice, gasPrice, address, amountETH, res.encodeABI, privateKey);
+                            await sendArbitrumTX(info.rpcArbitrum, res.estimateGas, gasPrice, gasPrice, info.traderJoeArbitrumRouter, amountETH, res.encodeABI, privateKey);
                         });
                     });
                 } catch (err) {
@@ -439,6 +439,31 @@ const bridgeETHToArbitrum = async(privateKey) => {
     }
 }
 
+const bridgeAllETHToArbitrum = async(privateKey) => {
+    const address = privateToAddress(privateKey);
+    const amountETH = parseInt(
+        multiply(await getETHAmount(info.rpcOptimism, address),
+            generateRandomAmount(process.env.PERCENT_BRIDGE_MIN / 100, process.env.PERCENT_BRIDGE_MIN / 100, 3))
+    );
+
+    try{
+        await getETHAmount
+        await feeBridgeStargate(info.rpcOptimism, 110, info.StargateRouterOptimism, 0, 0, address).then(async(bridgeFee) => {
+            const value = add(amountETH, bridgeFee);
+            await dataBridgeETH(info.rpcOptimism, 110, amountETH, value, info.ETHRouterOptimism, address).then(async(res) => {
+                await getGasPrice(info.rpcOptimism).then(async(gasPrice) => {
+                    gasPrice = (parseFloat(gasPrice * 1.5).toFixed(5)).toString();
+                    await sendOptimismTX(info.rpcOptimism, res.estimateGas, gasPrice, info.ETHRouterOptimism, value, res.encodeABI, privateKey);
+                });
+            });
+        });
+    } catch (err) {
+        logger.log(err.message);
+        console.log(err.message);
+        await timeout(pauseTime);
+    }
+}
+
 (async() => {
     const wallet = parseFile('private.txt');
     const allStage = [
@@ -449,8 +474,9 @@ const bridgeETHToArbitrum = async(privateKey) => {
         'Bridge BTC from Arbitrum to Optimism',
         'Bridge BTC from Optimism to Arbitrum',
         'Bridge ETH from Arbitrum to Optimism',
-        'Bridge ETH from Optimism to Arbitrumn',
-        'Random Bridge BTC/ETH Arbitrum -> Optimism -> Arbitrum'
+        'Bridge ETH from Optimism to Arbitrum',
+        'Random Bridge BTC/ETH Arbitrum -> Optimism -> Arbitrum',
+        //'Bridge ALL ETH from Optimism to Arbitrum' 
     ];
 
     const index = readline.keyInSelect(allStage, 'Choose stage!');
@@ -489,6 +515,8 @@ const bridgeETHToArbitrum = async(privateKey) => {
                     await mainPart[s](wallet[i]);
                 }
             }
+        } else if (index == 9) {
+            //await bridgeAllETHToArbitrum(wallet[i]);
         }
 
         await timeout(pauseWalletTime);
