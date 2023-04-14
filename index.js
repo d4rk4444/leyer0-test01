@@ -202,6 +202,74 @@ const circeBTCBridge = async(privateKey) => {
         });
     }
 
+    isReady = false;
+    while(!isReady) {
+        //APPROVE BTCb for Router
+        console.log(chalk.yellow(`Approve BTCb TraderJoe`));
+        logger.log(`Approve BTCb TraderJoe`);
+        await getAmountToken(info.rpcArbitrum, info.BTCb, address).then(async(amountBTCb) => {
+            await checkAllowance(info.rpcArbitrum, info.BTCb, address, info.traderJoeArbitrumRouter).then(async(res) => {
+                if (Number(res) < amountBTCb) {
+                    console.log(chalk.yellow(`Start Approve BTCb for Router`));
+                    logger.log(`Start Approve BTCb for Router`);
+                    try {
+                        await dataApprove(info.rpcArbitrum, info.BTCb, info.traderJoeArbitrumRouter, address).then(async(res1) => {
+                            await getGasPrice(info.rpcArbitrum).then(async(gasPrice) => {
+                                await sendArbitrumTX(info.rpcArbitrum, res1.estimateGas, gasPrice, gasPrice, info.traderJoeArbitrumRouter, null, res1.encodeABI, privateKey);
+                            });
+                        });
+                    } catch (err) {
+                        logger.log(err.message);
+                        console.log(err.message);
+                        if (i == 3) {
+                            throw new Error(err);
+                        }
+                        await timeout(pauseTime);
+                    }
+                        
+                } else if (Number(res) >= amountBTCb) {
+                    isReady = true;
+                    console.log(chalk.magentaBright(`Approve BTCb Successful`));
+                    logger.log(`Approve BTCb Successful`);
+                    await timeout(pauseTime);
+                }
+            });
+        });
+    }
+
+    isReady = false;
+    while(!isReady) {
+        //Swap BTCb -> ETH
+        try {
+            await getAmountToken(info.rpcArbitrum, info.BTCb, address).then(async(amountBTCb) => {
+                await dataTraderSwapTokenToETH(info.rpcArbitrum, info.BTCb, info.WETHBTCBLPArbitrum, amountBTCb, address, slippage).then(async(res) => {
+                    await getGasPrice(info.rpcArbitrum).then(async(gasPrice) => {
+                        await sendArbitrumTX(info.rpcArbitrum, res.estimateGas, gasPrice, gasPrice, address, null, res.encodeABI, privateKey);
+                    });
+                });
+            })
+        } catch (err) {
+            logger.log(err.message);
+            console.log(err.message);
+            if (i == 3) {
+                throw new Error(err);
+            }
+            await timeout(pauseTime);
+        }
+
+        await getAmountToken(info.rpcArbitrum, info.BTCb, address).then(async(res) => {
+            if (res > 0) {
+                console.log(chalk.red(`Error Swap BTCb -> ETH, try again`));
+                logger.log(`Error Swap BTCb -> ETH, try again`);
+            } else if (res == 0) {
+                isReady = true;
+                console.log(chalk.magentaBright(`Swap BTCb -> ETH Successful`));
+                logger.log(`Swap BTCb -> ETH Successful`);
+                await timeout(pauseTime);
+            }
+        });
+    }
+
     return true;
 }
 
@@ -308,12 +376,43 @@ const circeETHBridge = async(privateKey) => {
 
 const swapBTCBToETH = async(privateKey) => {
     const address = privateToAddress(privateKey);
-    const amountETH = parseInt(
-        multiply(await getETHAmount(info.rpcArbitrum, address),
-            generateRandomAmount(process.env.PERCENT_BRIDGE_MIN / 100, process.env.PERCENT_BRIDGE_MIN / 100, 3))
-    );
 
     let isReady;
+    while(!isReady) {
+        //APPROVE BTCb for Router
+        console.log(chalk.yellow(`Approve BTCb TraderJoe`));
+        logger.log(`Approve BTCb TraderJoe`);
+        await getAmountToken(info.rpcArbitrum, info.BTCb, address).then(async(amountBTCb) => {
+            await checkAllowance(info.rpcArbitrum, info.BTCb, address, info.traderJoeArbitrumRouter).then(async(res) => {
+                if (Number(res) < amountBTCb) {
+                    console.log(chalk.yellow(`Start Approve BTCb for Router`));
+                    logger.log(`Start Approve BTCb for Router`);
+                    try {
+                        await dataApprove(info.rpcArbitrum, info.BTCb, info.traderJoeArbitrumRouter, address).then(async(res1) => {
+                            await getGasPrice(info.rpcArbitrum).then(async(gasPrice) => {
+                                await sendArbitrumTX(info.rpcArbitrum, res1.estimateGas, gasPrice, gasPrice, info.traderJoeArbitrumRouter, null, res1.encodeABI, privateKey);
+                            });
+                        });
+                    } catch (err) {
+                        logger.log(err.message);
+                        console.log(err.message);
+                        if (i == 3) {
+                            throw new Error(err);
+                        }
+                        await timeout(pauseTime);
+                    }
+                        
+                } else if (Number(res) >= amountBTCb) {
+                    isReady = true;
+                    console.log(chalk.magentaBright(`Approve BTCb Successful`));
+                    logger.log(`Approve BTCb Successful`);
+                    await timeout(pauseTime);
+                }
+            });
+        });
+    }
+
+    isReady = false;
     while(!isReady) {
         //Swap BTCb -> ETH
         try {
@@ -509,7 +608,9 @@ const bridgeAllETHToArbitrum = async(privateKey) => {
         } else if (index == 8) {
             const numberCircle = generateRandomAmount(process.env.NUMBER_CIRCLES_MIN, process.env.NUMBER_CIRCLES_MAX, 0);
             const mainPart = [circeBTCBridge, circeETHBridge];
-            for(let i = 0; i < numberCircle; i++) {
+            for(let n = 0; n < numberCircle; n++) {
+                console.log(chalk.magentaBright(`Start #${n+1} Circle`));
+                logger.log(`Start #${n+1} Circle`);
                 shuffle(mainPart);
                 for (let s = 0; s < mainPart.length; s++) {
                     await mainPart[s](wallet[i]);
