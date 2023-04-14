@@ -215,13 +215,15 @@ const circeBTCBridge = async(privateKey) => {
                     try {
                         await dataApprove(info.rpcArbitrum, info.BTCb, info.traderJoeArbitrumRouter, address).then(async(res1) => {
                             await getGasPrice(info.rpcArbitrum).then(async(gasPrice) => {
-                                await sendArbitrumTX(info.rpcArbitrum, res1.estimateGas, gasPrice, gasPrice, info.traderJoeArbitrumRouter, null, res1.encodeABI, privateKey);
+                                await sendArbitrumTX(info.rpcArbitrum, res1.estimateGas, gasPrice, gasPrice, info.BTCb, null, res1.encodeABI, privateKey);
                             });
                         });
                     } catch (err) {
+                        i = i + 1;
                         logger.log(err.message);
                         console.log(err.message);
                         if (i == 3) {
+                            i = 0;
                             throw new Error(err);
                         }
                         await timeout(pauseTime);
@@ -244,14 +246,16 @@ const circeBTCBridge = async(privateKey) => {
             await getAmountToken(info.rpcArbitrum, info.BTCb, address).then(async(amountBTCb) => {
                 await dataTraderSwapTokenToETH(info.rpcArbitrum, info.BTCb, info.WETHBTCBLPArbitrum, amountBTCb, address, slippage).then(async(res) => {
                     await getGasPrice(info.rpcArbitrum).then(async(gasPrice) => {
-                        await sendArbitrumTX(info.rpcArbitrum, res.estimateGas, gasPrice, gasPrice, address, null, res.encodeABI, privateKey);
+                        await sendArbitrumTX(info.rpcArbitrum, res.estimateGas, gasPrice, gasPrice, info.traderJoeArbitrumRouter, null, res.encodeABI, privateKey);
                     });
                 });
             })
         } catch (err) {
+            i = i + 1;
             logger.log(err.message);
             console.log(err.message);
             if (i == 3) {
+                i = 0;
                 throw new Error(err);
             }
             await timeout(pauseTime);
@@ -390,15 +394,12 @@ const swapBTCBToETH = async(privateKey) => {
                     try {
                         await dataApprove(info.rpcArbitrum, info.BTCb, info.traderJoeArbitrumRouter, address).then(async(res1) => {
                             await getGasPrice(info.rpcArbitrum).then(async(gasPrice) => {
-                                await sendArbitrumTX(info.rpcArbitrum, res1.estimateGas, gasPrice, gasPrice, info.traderJoeArbitrumRouter, null, res1.encodeABI, privateKey);
+                                await sendArbitrumTX(info.rpcArbitrum, res1.estimateGas, gasPrice, gasPrice, info.BTCb, null, res1.encodeABI, privateKey);
                             });
                         });
                     } catch (err) {
                         logger.log(err.message);
                         console.log(err.message);
-                        if (i == 3) {
-                            throw new Error(err);
-                        }
                         await timeout(pauseTime);
                     }
                         
@@ -419,16 +420,13 @@ const swapBTCBToETH = async(privateKey) => {
             await getAmountToken(info.rpcArbitrum, info.BTCb, address).then(async(amountBTCb) => {
                 await dataTraderSwapTokenToETH(info.rpcArbitrum, info.BTCb, info.WETHBTCBLPArbitrum, amountBTCb, address, slippage).then(async(res) => {
                     await getGasPrice(info.rpcArbitrum).then(async(gasPrice) => {
-                        await sendArbitrumTX(info.rpcArbitrum, res.estimateGas, gasPrice, gasPrice, address, null, res.encodeABI, privateKey);
+                        await sendArbitrumTX(info.rpcArbitrum, res.estimateGas, gasPrice, gasPrice, info.traderJoeArbitrumRouter, null, res.encodeABI, privateKey);
                     });
                 });
             })
         } catch (err) {
             logger.log(err.message);
             console.log(err.message);
-            if (i == 3) {
-                throw new Error(err);
-            }
             await timeout(pauseTime);
         }
 
