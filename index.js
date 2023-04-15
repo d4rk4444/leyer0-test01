@@ -538,19 +538,32 @@ const bridgeETHToArbitrum = async(privateKey) => {
 
 const bridgeAllETHToArbitrum = async(privateKey) => {
     const address = privateToAddress(privateKey);
-    const amountETH = parseInt(
+    let amountETH = parseInt(
         multiply(await getETHAmount(info.rpcOptimism, address),
             generateRandomAmount(process.env.PERCENT_BRIDGE_MIN / 100, process.env.PERCENT_BRIDGE_MIN / 100, 3))
     );
 
     try{
-        await getETHAmount
-        await feeBridgeStargate(info.rpcOptimism, 110, info.StargateRouterOptimism, 0, 0, address).then(async(bridgeFee) => {
-            const value = add(amountETH, bridgeFee);
-            await dataBridgeETH(info.rpcOptimism, 110, amountETH, value, info.ETHRouterOptimism, address).then(async(res) => {
-                await getGasPrice(info.rpcOptimism).then(async(gasPrice) => {
-                    gasPrice = (parseFloat(gasPrice * 1.5).toFixed(5)).toString();
-                    await sendOptimismTX(info.rpcOptimism, res.estimateGas, gasPrice, info.ETHRouterOptimism, value, res.encodeABI, privateKey);
+        await getETHAmount(info.rpcOptimism, address).then(async(balanceETH) => {
+            await getGasPrice(info.rpcETH).then(async(gasPriceETH) => {
+                await feeBridgeStargate(info.rpcOptimism, 110, info.StargateRouterOptimism, 0, 0, address).then(async(bridgeFee) => {
+                    const value = add(amountETH, bridgeFee);
+                    await dataBridgeETH(info.rpcOptimism, 110, amountETH, value, info.ETHRouterOptimism, address).then(async(res) => {
+                        await getGasPrice(info.rpcOptimism).then(async(gasPriceOP) => {
+                            gasPriceETH = (parseFloat(gasPriceETH * 1.2).toFixed(5)).toString();
+                            gasPriceOP = (parseFloat(gasPriceOP * 1.5).toFixed(5)).toString();
+                            const amountFee = parseInt(add(multiply(gasPriceOP * 10**9, res.estimateGas), multiply(gasPriceETH * 10**9, 6000)));
+                            console.log(amountFee);
+                            await feeBridgeStargate(info.rpcOptimism, 110, info.StargateRouterOptimism, 0, 0, address).then(async(bridgeFee) => {
+                                amountETH = subtract(balanceETH, add(amountFee, bridgeFee));
+                                console.log(amountETH);
+                                const value = add(amountETH, bridgeFee);
+                                await dataBridgeETH(info.rpcOptimism, 110, amountETH, value, info.ETHRouterOptimism, address).then(async(res1) => {
+                                    await sendOptimismTX(info.rpcOptimism, res1.estimateGas, gasPriceOP, info.ETHRouterOptimism, value, res1.encodeABI, privateKey);
+                                });
+                            }); 
+                        });
+                    });
                 });
             });
         });
@@ -573,7 +586,7 @@ const bridgeAllETHToArbitrum = async(privateKey) => {
         'Bridge ETH from Arbitrum to Optimism',
         'Bridge ETH from Optimism to Arbitrum',
         'Random Bridge BTC/ETH Arbitrum -> Optimism -> Arbitrum',
-        //'Bridge ALL ETH from Optimism to Arbitrum' 
+        'Bridge ALL ETH from Optimism to Arbitrum' 
     ];
 
     const index = readline.keyInSelect(allStage, 'Choose stage!');
@@ -615,7 +628,7 @@ const bridgeAllETHToArbitrum = async(privateKey) => {
                 }
             }
         } else if (index == 9) {
-            //await bridgeAllETHToArbitrum(wallet[i]);
+            await bridgeAllETHToArbitrum(wallet[i]);
         }
 
         await timeout(pauseWalletTime);
