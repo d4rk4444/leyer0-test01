@@ -550,7 +550,7 @@ const bridgeAllETHToArbitrum = async(privateKey) => {
                     const value = add(amountETH, bridgeFee);
                     await dataBridgeETH(info.rpcOptimism, 110, amountETH, value, info.ETHRouterOptimism, address).then(async(res) => {
                         await getGasPrice(info.rpcOptimism).then(async(gasPriceOP) => {
-                            gasPriceETH = (parseFloat(gasPriceETH * 1.2).toFixed(5)).toString();
+                            gasPriceETH = (parseFloat(gasPriceETH * 1.5).toFixed(5)).toString();
                             gasPriceOP = (parseFloat(gasPriceOP * 1.5).toFixed(5)).toString();
                             const amountFee = parseInt(add(multiply(gasPriceOP * 10**9, res.estimateGas), multiply(gasPriceETH * 10**9, 6000)));
                             console.log(amountFee);
