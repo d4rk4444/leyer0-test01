@@ -574,6 +574,26 @@ const bridgeAllETHToArbitrum = async(privateKey) => {
     }
 }
 
+const withdrawETHToSubWalletArbitrum = async(toAddress, privateKey) => {
+    const addressETH = privateToAddress(privateKey);
+
+    try {
+        await getETHAmount(info.rpcArbitrum, addressETH).then(async(amountETH) => {
+            await getGasPrice(info.rpcArbitrum).then(async(gasPrice) => {
+                gasPrice = (parseFloat(multiply(gasPrice, 1.2)).toFixed(5)).toString();
+                amountETH = subtract(amountETH, 1100000 * multiply(gasPrice, 10**9));
+                await sendArbitrumTX(info.rpcArbitrum, generateRandomAmount(900000, 1000000, 0), gasPrice, gasPrice, toAddress, amountETH, null, privateKey);
+                console.log(chalk.yellow(`Send ${amountETH / 10**18}ETH to ${toAddress} Arbitrum`));
+                logger.log(`Send ${amountETH / 10**18}ETH to ${toAddress} Arbitrum`);
+            });
+        });
+    } catch (err) {
+        logger.log(err.message);
+        console.log(err.message);
+        await timeout(pauseTime);
+    }
+}
+
 (async() => {
     const wallet = parseFile('private.txt');
     const allStage = [
@@ -586,7 +606,8 @@ const bridgeAllETHToArbitrum = async(privateKey) => {
         'Bridge ETH from Arbitrum to Optimism',
         'Bridge ETH from Optimism to Arbitrum',
         'Random Bridge BTC/ETH Arbitrum -> Optimism -> Arbitrum',
-        'Bridge ALL ETH from Optimism to Arbitrum' 
+        'Bridge ALL ETH from Optimism to Arbitrum',
+        'Send to SubWallet Arbitrum',
     ];
 
     const index = readline.keyInSelect(allStage, 'Choose stage!');
@@ -629,6 +650,9 @@ const bridgeAllETHToArbitrum = async(privateKey) => {
             }
         } else if (index == 9) {
             await bridgeAllETHToArbitrum(wallet[i]);
+        } else if (index == 10) {
+            const walletOKX = parseFile('subWallet.txt');
+            await withdrawETHToSubWalletArbitrum(walletOKX[i], wallet[i]);
         }
 
         await timeout(pauseWalletTime);
