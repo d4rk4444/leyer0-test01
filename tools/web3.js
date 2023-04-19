@@ -117,3 +117,43 @@ export const sendOptimismTX = async(rpc, gasLimit, gasPrice, toAddress, value, d
         }
     });
 }
+
+export const sendEVMTX = async(rpc, typeTx, gasLimit, toAddress, value, data, privateKey, maxFeeOrGasPrice, maxPriorityFee,) => {
+    const w3 = new Web3(new Web3.providers.HttpProvider(rpc));
+    const fromAddress = privateToAddress(privateKey);
+    
+    const tx = {
+        0: {
+            'from': fromAddress,
+            'gas': gasLimit,
+            'gasPrice': w3.utils.toWei(maxFeeOrGasPrice, 'Gwei'),
+            'chainId': await w3.eth.getChainId(),
+            'to': toAddress,
+            'nonce': await w3.eth.getTransactionCount(fromAddress),
+            'value': value,
+            'data': data
+        },
+        2: {
+            'from': fromAddress,
+            'gas': gasLimit,
+            'maxFeePerGas': w3.utils.toWei(maxFeeOrGasPrice, 'Gwei'),
+            'maxPriorityFeePerGas': w3.utils.toWei(maxPriorityFee, 'Gwei'),
+            'chainId': await w3.eth.getChainId(),
+            'to': toAddress,
+            'nonce': await w3.eth.getTransactionCount(fromAddress),
+            'value': value,
+            'data': data
+        }
+    };
+
+    const signedTx = await w3.eth.accounts.signTransaction(tx[typeTx], privateKey);
+    await w3.eth.sendSignedTransaction(signedTx.rawTransaction, async(error, hash) => {
+        if (!error) {
+            const chain = (Object.keys(info)[Object.values(info).findIndex(e => e == rpc)]).slice(3);
+            const explorer = info['explorer' + (Object.keys(info)[Object.values(info).findIndex(e => e == rpc)]).slice(3)];
+            console.log(`${chain} TX: ${explorer + hash}`);
+        } else {
+            console.log(`Error Tx: ${error}`);
+        }
+    });
+}
