@@ -33,11 +33,11 @@ const slippage = generateRandomAmount(1 - process.env.SLIPPAGE_MIN / 100, 1 - pr
 
 const getAllFeeOptimism = async() => {
     const addressExample = process.env.ADDRESS_EXAMPLE
-    const numberCircles = (process.env.NUMBER_CIRCLES_MAX * 2);
+    const numberCircles = process.env.NUMBER_CIRCLES_MAX;
     
     const amountFeeBTCBridge = await feeBridgeBTC(info.rpcOptimism, 110, '1', info.BTCb, 2, 3000000, 0, addressExample);
     const amountFeeETHBridge = await feeBridgeStargate(info.rpcOptimism, 110, info.StargateRouterOptimism, 0, 0, addressExample);
-    const random = generateRandomAmount(1.7, 2.1, 3);
+    const random = generateRandomAmount(1.5, 1.7, 3);
     const amountFeeAll = parseInt(multiply(add(amountFeeBTCBridge, amountFeeETHBridge), numberCircles, random));
     
     return amountFeeAll;
@@ -597,23 +597,51 @@ const withdrawETHToSubWalletArbitrum = async(toAddress, privateKey) => {
 (async() => {
     const wallet = parseFile('private.txt');
     const allStage = [
+        'MAIN',
+        'POST',
+        'OTHER'
+    ];
+    const mainStage = [
         'Send All FEE to Optimism',
         'Bridge BTC Arbitrum -> Optimism -> Arbitrum',
         'Bridge ETH Arbitrum -> Optimism -> Arbitrum',
+        'Random Bridge BTC/ETH Arbitrum -> Optimism -> Arbitrum',
+    ];
+    const postStage = [
         'Swap All BTCb -> ETH Arbitrum',
+        'Bridge ALL ETH from Optimism to Arbitrum',
         'Bridge BTC from Arbitrum to Optimism',
         'Bridge BTC from Optimism to Arbitrum',
         'Bridge ETH from Arbitrum to Optimism',
         'Bridge ETH from Optimism to Arbitrum',
-        'Random Bridge BTC/ETH Arbitrum -> Optimism -> Arbitrum',
-        'Bridge ALL ETH from Optimism to Arbitrum',
+    ];
+    const otherStage = [
         'Send to SubWallet Arbitrum',
     ];
 
     const index = readline.keyInSelect(allStage, 'Choose stage!');
+    let index1;
+    let index2;
+    let index3;
     if (index == -1) { process.exit() };
     console.log(chalk.green(`Start ${allStage[index]}`));
     logger.log(`Start ${allStage[index]}`);
+    if (index == 0) {
+        index1 = readline.keyInSelect(mainStage, 'Choose stage!');
+        if (index1 == -1) { process.exit() };
+        console.log(chalk.green(`Start ${mainStage[index1]}`));
+        logger.log(`Start ${mainStage[index1]}`);
+    } else if (index == 1) {
+        index2 = readline.keyInSelect(postStage, 'Choose stage!');
+        if (index2 == -1) { process.exit() };
+        console.log(chalk.green(`Start ${postStage[index2]}`));
+        logger.log(`Start ${postStage[index2]}`);
+    } else if (index == 2) {
+        index3 = readline.keyInSelect(otherStage, 'Choose stage!');
+        if (index3 == -1) { process.exit() };
+        console.log(chalk.green(`Start ${otherStage[index3]}`));
+        logger.log(`Start ${otherStage[index3]}`);
+    }
     
     for (let i = 0; i < wallet.length; i++) {
         try {
@@ -621,23 +649,13 @@ const withdrawETHToSubWalletArbitrum = async(toAddress, privateKey) => {
             logger.log(`Wallet ${i+1}: ${privateToAddress(wallet[i])}`);
         } catch (err) { throw new Error('Error: Add Private Keys!') };
 
-        if (index == 0) {
+        if (index1 == 0) { //MAIN STAGE
             await sendFeeToOptimism(wallet[i]);
-        } else if (index == 1) {
+        } else if (index1 == 1) {
             await circeBTCBridge(wallet[i]);
-        } else if (index == 2) {
+        } else if (index1 == 2) {
             await circeETHBridge(wallet[i]);
-        } else if (index == 3) {
-            await swapBTCBToETH(wallet[i]);
-        }  else if (index == 4) {
-            await bridgeBTCToOptimism(wallet[i]);
-        } else if (index == 5) {
-            await bridgeBTCToArbitrum(wallet[i]);
-        } else if (index == 6) {
-            await bridgeETHToOptimism(wallet[i]);
-        } else if (index == 7) {
-            await bridgeETHToArbitrum(wallet[i]);
-        } else if (index == 8) {
+        } else if (index1 == 3) {
             const numberCircle = generateRandomAmount(process.env.NUMBER_CIRCLES_MIN, process.env.NUMBER_CIRCLES_MAX, 0);
             const mainPart = [circeBTCBridge, circeETHBridge];
             for(let n = 0; n < numberCircle; n++) {
@@ -648,9 +666,19 @@ const withdrawETHToSubWalletArbitrum = async(toAddress, privateKey) => {
                     await mainPart[s](wallet[i]);
                 }
             }
-        } else if (index == 9) {
+        } else if (index2 == 0) { //POST STAGE
+            await swapBTCBToETH(wallet[i]);
+        } else if (index2 == 1) { //POST STAGE
             await bridgeAllETHToArbitrum(wallet[i]);
-        } else if (index == 10) {
+        } else if (index2 == 2) { //POST STAGE
+            await bridgeBTCToOptimism(wallet[i]);
+        } else if (index2 == 3) {
+            await bridgeBTCToArbitrum(wallet[i]);
+        } else if (index2 == 4) {
+            await bridgeETHToOptimism(wallet[i]);
+        } else if (index2 == 5) {
+            await bridgeETHToArbitrum(wallet[i]);
+        } else if (index3 == 0) { //OTHER
             const walletOKX = parseFile('subWallet.txt');
             await withdrawETHToSubWalletArbitrum(walletOKX[i], wallet[i]);
         }
