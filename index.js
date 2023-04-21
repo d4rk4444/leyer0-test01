@@ -48,7 +48,7 @@ const getAllFeeOptimism = async() => {
 
 const sendFeeToOptimism = async(privateKey) => {
     const address = privateToAddress(privateKey);
-    const amountETH = generateRandomAmount(process.env.ETH_BRIDGE_MIN * 10**18, process.env.ETH_BRIDGE_MAX * 10**18, 0);
+    const amountETH = generateRandomAmount(process.env.AMOUNT_ETH_OP_MIN * 10**18, process.env.AMOUNT_ETH_OP_MAX * 10**18, 0);
 
     try{
         await feeBridgeStargate(info.rpcArbitrum, 111, info.StargateRouterArbitrum, 0, 0, address).then(async(bridgeFee) => {
