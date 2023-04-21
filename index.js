@@ -1013,4 +1013,4 @@ const withdrawETHToSubWalletAvalanche = async(toAddress, privateKey) => {
     }
     console.log(chalk.bgMagentaBright('Process End!'));
     logger.log('Process End!');
-});
+})();
