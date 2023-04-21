@@ -476,11 +476,9 @@ const mainRandomBridge = async(privateKey) => {
                 console.log(chalk.yellow(`Bridge BTCb ${chainNow} -> ${chainTo}`));
                 logger.log(`Bridge BTCb ${chainNow} -> ${chainTo}`);
                 try {
-                    const result = await bridgeBTCToChain(info.rpcArbitrum, info['chainId' + chainTo], 2, amountGasFromArb, 0, 2, privateKey);
-                    if (result) {
-                        chainNow = chainTo;
-                        isReady = true;
-                    } else { return; }
+                    await bridgeBTCToChain(info.rpcArbitrum, info['chainId' + chainTo], 2, amountGasFromArb, 0, 2, privateKey);
+                    chainNow = chainTo;
+                    isReady = true;
                 } catch (err) {
                     logger.log(err.message);
                     console.log(err.message);
@@ -508,11 +506,9 @@ const mainRandomBridge = async(privateKey) => {
                             if (chainNow == 'Avalanche') {
                                 await approveBridgeAvalanche(privateKey);
                             }
-                            const result = await bridgeBTCToChain(info['rpc' + chainNow], info['chainId' + chainTo], 2, amountGasFromArb, 0, typeTX, privateKey);
-                            if (result) {
-                                chainNow = chainTo;
-                                isReady = true;
-                            } else { return; }
+                            await bridgeBTCToChain(info['rpc' + chainNow], info['chainId' + chainTo], 2, amountGasFromArb, 0, typeTX, privateKey);
+                            chainNow = chainTo;
+                            isReady = true;
                         }
                     });
                 } catch (err) {
@@ -541,11 +537,9 @@ const mainRandomBridge = async(privateKey) => {
                             if (chainNow == 'Avalanche') {
                                 await approveBridgeAvalanche(privateKey);
                             }
-                            const result = await bridgeBTCToChain(info['rpc' + chainNow], info['chainId' + chainTo], 2, amountGasToArb, 0, typeTX, privateKey);
-                            if (result) {
-                                chainNow = chainTo;
-                                isReady = true;
-                            } else { return; }
+                            await bridgeBTCToChain(info['rpc' + chainNow], info['chainId' + chainTo], 2, amountGasToArb, 0, typeTX, privateKey);
+                            chainNow = chainTo;
+                            isReady = true;
                         }
                     });
                 } catch (err) {
