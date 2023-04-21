@@ -56,7 +56,7 @@ const sendFeeToOptimism = async(privateKey) => {
             await dataBridgeETH(info.rpcArbitrum, 111, amountETH, value, info.ETHRouterArbitrum, address).then(async(res) => {
                 await getGasPrice(info.rpcArbitrum).then(async(gasPrice) => {
                     gasPrice = (parseFloat(gasPrice * 1.5).toFixed(5)).toString();
-                    await sendEVMTX(info.rpcArbitrum, 2, res.estimateGas, info.ETHRouterArbitrum, value, res.encodeABI, privateKey, gasPrice, gasPrice,);
+                    await sendEVMTX(info.rpcArbitrum, 2, res.estimateGas, info.ETHRouterArbitrum, value, res.encodeABI, privateKey, gasPrice, gasPrice);
                 });
             });
         });
@@ -366,6 +366,7 @@ const bridgeBTCToChain = async(rpcFrom, chainIdTo, lzVersion, lzGasLimit, lzNati
                             priorityFee = '1.5';
                         }
                         await sendEVMTX(rpcFrom, typeTX, res.estimateGas, info.BTCb, bridgeFee, res.encodeABI, privateKey, gasPrice, priorityFee);
+                        return true;
                     });
                 });
             });
@@ -475,9 +476,11 @@ const mainRandomBridge = async(privateKey) => {
                 console.log(chalk.yellow(`Bridge BTCb ${chainNow} -> ${chainTo}`));
                 logger.log(`Bridge BTCb ${chainNow} -> ${chainTo}`);
                 try {
-                    await bridgeBTCToChain(info.rpcArbitrum, info['chainId' + chainTo], 2, amountGasFromArb, 0, 2, privateKey);
-                    chainNow = chainTo;
-                    isReady = true;
+                    const result = await bridgeBTCToChain(info.rpcArbitrum, info['chainId' + chainTo], 2, amountGasFromArb, 0, 2, privateKey);
+                    if (result) {
+                        chainNow = chainTo;
+                        isReady = true;
+                    } else { return; }
                 } catch (err) {
                     logger.log(err.message);
                     console.log(err.message);
@@ -505,9 +508,11 @@ const mainRandomBridge = async(privateKey) => {
                             if (chainNow == 'Avalanche') {
                                 await approveBridgeAvalanche(privateKey);
                             }
-                            await bridgeBTCToChain(info['rpc' + chainNow], info['chainId' + chainTo], 2, amountGasFromArb, 0, typeTX, privateKey);
-                            chainNow = chainTo;
-                            isReady = true;
+                            const result = await bridgeBTCToChain(info['rpc' + chainNow], info['chainId' + chainTo], 2, amountGasFromArb, 0, typeTX, privateKey);
+                            if (result) {
+                                chainNow = chainTo;
+                                isReady = true;
+                            } else { return; }
                         }
                     });
                 } catch (err) {
@@ -536,9 +541,11 @@ const mainRandomBridge = async(privateKey) => {
                             if (chainNow == 'Avalanche') {
                                 await approveBridgeAvalanche(privateKey);
                             }
-                            await bridgeBTCToChain(info['rpc' + chainNow], info['chainId' + chainTo], 2, amountGasToArb, 0, typeTX, privateKey);
-                            chainNow = chainTo;
-                            isReady = true;
+                            const result = await bridgeBTCToChain(info['rpc' + chainNow], info['chainId' + chainTo], 2, amountGasToArb, 0, typeTX, privateKey);
+                            if (result) {
+                                chainNow = chainTo;
+                                isReady = true;
+                            } else { return; }
                         }
                     });
                 } catch (err) {
@@ -630,7 +637,6 @@ const mainRandomBridge = async(privateKey) => {
 
     return true;
 }
-
 
 //============================================================
 
@@ -725,21 +731,24 @@ const bridgeETHToOptimism = async(privateKey) => {
 
 const bridgeETHToArbitrum = async(privateKey) => {
     const address = privateToAddress(privateKey);
-    const amountETH = parseInt(
-        multiply(await getETHAmount(info.rpcOptimism, address),
-            generateRandomAmount(process.env.PERCENT_BRIDGE_MIN / 100, process.env.PERCENT_BRIDGE_MIN / 100, 3))
-    );
-
+    
     try{
-        await feeBridgeStargate(info.rpcOptimism, 110, info.StargateRouterOptimism, 0, 0, address).then(async(bridgeFee) => {
-            const value = add(amountETH, bridgeFee);
-            await dataBridgeETH(info.rpcOptimism, 110, amountETH, value, info.ETHRouterOptimism, address).then(async(res) => {
-                await getGasPrice(info.rpcOptimism).then(async(gasPrice) => {
-                    gasPrice = (parseFloat(gasPrice * 1.5).toFixed(5)).toString();
-                    await sendOptimismTX(info.rpcOptimism, res.estimateGas, gasPrice, info.ETHRouterOptimism, value, res.encodeABI, privateKey);
+        await getETHAmount(rpc.rpcOptimism, address).then(async(balanceETH) => {
+            const amountETH = subtract(balanceETH, generateRandomAmount(process.env.ETH_BRIDGE_MIN * 10**18, process.env.ETH_BRIDGE_MAX * 10**18, 0));
+            if (Number(amountETH) > 0) {
+                await feeBridgeStargate(info.rpcOptimism, 110, info.StargateRouterOptimism, 0, 0, address).then(async(bridgeFee) => {
+                    const value = add(amountETH, bridgeFee);
+                    await dataBridgeETH(info.rpcOptimism, 110, amountETH, value, info.ETHRouterOptimism, address).then(async(res) => {
+                        await getGasPrice(info.rpcOptimism).then(async(gasPrice) => {
+                            gasPrice = (parseFloat(gasPrice * 1.5).toFixed(5)).toString();
+                            await sendEVMTX(info.rpcOptimism, 0, res.estimateGas, info.ETHRouterOptimism, value, res.encodeABI, privateKey, gasPrice);
+                        });
+                    });
                 });
-            });
-        });
+            } else if (Number(amountETH) < 0) {
+                throw new Error(`Wallet ${address} no ether to send`);
+            }
+        }); 
     } catch (err) {
         logger.log(err.message);
         console.log(err.message);
@@ -785,6 +794,8 @@ const bridgeAllETHToArbitrum = async(privateKey) => {
     }
 }
 
+//============================================================
+
 const withdrawETHToSubWalletArbitrum = async(toAddress, privateKey) => {
     const addressETH = privateToAddress(privateKey);
 
@@ -793,7 +804,8 @@ const withdrawETHToSubWalletArbitrum = async(toAddress, privateKey) => {
             await getGasPrice(info.rpcArbitrum).then(async(gasPrice) => {
                 gasPrice = (parseFloat(multiply(gasPrice, 1.2)).toFixed(5)).toString();
                 amountETH = subtract(amountETH, 1100000 * multiply(gasPrice, 10**9));
-                await sendArbitrumTX(info.rpcArbitrum, generateRandomAmount(900000, 1000000, 0), gasPrice, gasPrice, toAddress, amountETH, null, privateKey);
+                await sendEVMTX(info.rpcArbitrum, 2, generateRandomAmount(900000, 1000000, 0), toAddress, amountETH, null, privateKey, gasPrice, gasPrice);
+                
                 console.log(chalk.yellow(`Send ${amountETH / 10**18}ETH to ${toAddress} Arbitrum`));
                 logger.log(`Send ${amountETH / 10**18}ETH to ${toAddress} Arbitrum`);
             });
@@ -805,8 +817,70 @@ const withdrawETHToSubWalletArbitrum = async(toAddress, privateKey) => {
     }
 }
 
+const withdrawETHToSubWalletBSC = async(toAddress, privateKey) => {
+    const addressETH = privateToAddress(privateKey);
+
+    try {
+        await getETHAmount(info.rpcBSC, addressETH).then(async(amountETH) => {
+            gasPrice = '5';
+            amountETH = subtract(amountETH, 21000 * multiply(5.1, 10**9));
+            await sendEVMTX(info.rpcBSC, 0, 21000, toAddress, amountETH, null, privateKey, gasPrice);
+            
+            console.log(chalk.yellow(`Send ${amountETH / 10**18}ETH to ${toAddress} BSC`));
+            logger.log(`Send ${amountETH / 10**18}ETH to ${toAddress} BSC`);
+        });
+    } catch (err) {
+        logger.log(err.message);
+        console.log(err.message);
+        return;
+    }
+}
+
+const withdrawETHToSubWalletPolygon = async(toAddress, privateKey) => {
+    const addressETH = privateToAddress(privateKey);
+
+    try {
+        await getETHAmount(info.rpcPolygon, addressETH).then(async(amountETH) => {
+            await getGasPrice(info.rpcPolygon).then(async(gasPrice) => {
+                gasPrice = (parseFloat(multiply(gasPrice, 1.5)).toFixed(5)).toString();
+                amountETH = subtract(amountETH, 21000 * multiply(add(gasPrice, 30), 10**9));
+                await sendEVMTX(info.rpcPolygon, 2, 21000, toAddress, amountETH, null, privateKey, gasPrice, '30');
+                
+                console.log(chalk.yellow(`Send ${amountETH / 10**18}ETH to ${toAddress} Polygon`));
+                logger.log(`Send ${amountETH / 10**18}ETH to ${toAddress} Polygon`);
+            });
+        });
+    } catch (err) {
+        logger.log(err.message);
+        console.log(err.message);
+        return;
+    }
+}
+
+const withdrawETHToSubWalletAvalanche = async(toAddress, privateKey) => {
+    const addressETH = privateToAddress(privateKey);
+
+    try {
+        await getETHAmount(info.rpcAvalanche, addressETH).then(async(amountETH) => {
+            await getGasPrice(info.rpcAvalanche).then(async(gasPrice) => {
+                gasPrice = (parseFloat(multiply(gasPrice, 1.5)).toFixed(5)).toString();
+                amountETH = subtract(amountETH, 21000 * multiply(gasPrice, 10**9));
+                await sendEVMTX(info.rpcAvalanche, 0, 21000, toAddress, amountETH, null, privateKey, gasPrice);
+                
+                console.log(chalk.yellow(`Send ${amountETH / 10**18}ETH to ${toAddress} Avalanche`));
+                logger.log(`Send ${amountETH / 10**18}ETH to ${toAddress} Avalanche`);
+            });
+        });
+    } catch (err) {
+        logger.log(err.message);
+        console.log(err.message);
+        return;
+    }
+}
+
 (async() => {
     const wallet = parseFile('private.txt');
+    const walletOKX = parseFile('subWallet.txt');
     const allStage = [
         'MAIN',
         'ALL BRIDGE',
@@ -839,6 +913,9 @@ const withdrawETHToSubWalletArbitrum = async(toAddress, privateKey) => {
     ];
     const otherStage = [
         'Send to SubWallet Arbitrum',
+        'Send to SubWallet BSC',
+        'Send to SubWallet Polygon',
+        'Send to SubWallet Avalanche',
     ];
 
     const index = readline.keyInSelect(allStage, 'Choose stage!');
@@ -921,9 +998,14 @@ const withdrawETHToSubWalletArbitrum = async(toAddress, privateKey) => {
             await swapBTCBToETH(wallet[i]);
         } else if (index3 == 1) {
             await bridgeAllETHToArbitrum(wallet[i]);
-        }  else if (index4 == 0) { //OTHER
-            const walletOKX = parseFile('subWallet.txt');
+        } else if (index4 == 0) { //OTHER
             await withdrawETHToSubWalletArbitrum(walletOKX[i], wallet[i]);
+        } else if (index4 == 1) {
+            await withdrawETHToSubWalletBSC(walletOKX[i], wallet[i]);
+        } else if (index4 == 2) {
+            await withdrawETHToSubWalletPolygon(walletOKX[i], wallet[i]);
+        } else if (index4 == 3) {
+            await withdrawETHToSubWalletAvalanche(walletOKX[i], wallet[i]);
         }
 
         await timeout(pauseWalletTime);
