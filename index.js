@@ -692,8 +692,8 @@ const bridgeETHToArbitrum = async(privateKey) => {
     
     try{
         await getETHAmount(info.rpcOptimism, address).then(async(balanceETH) => {
-            const amountETH = subtract(balanceETH, generateRandomAmount(process.env.ETH_BRIDGE_MIN * 10**18, process.env.ETH_BRIDGE_MAX * 10**18, 0));
-            if (Number(amountETH) > 0) {
+            const amountETH = subtract(balanceETH, generateRandomAmount(process.env.AMOUNT_ETH_OP_MIN * 10**18, process.env.AMOUNT_ETH_OP_MAX * 10**18, 0));
+            if (amountETH > 0) {
                 await feeBridgeStargate(info.rpcOptimism, 110, info.StargateRouterOptimism, 0, 0, address).then(async(bridgeFee) => {
                     const value = add(amountETH, bridgeFee);
                     await dataBridgeETH(info.rpcOptimism, 110, amountETH, value, info.ETHRouterOptimism, address).then(async(res) => {
@@ -703,12 +703,12 @@ const bridgeETHToArbitrum = async(privateKey) => {
                         });
                     });
                 });
-            } else if (Number(amountETH) < 0) {
+            } else if (amountETH < 0) {
                 logger.log(`Wallet ${address} no ETH to send`);
                 console.log(chalk.red(`Wallet ${address} no ETH to send`));
                 return;
             }
-        }); 
+        });
     } catch (err) {
         logger.log(err.message);
         console.log(err.message);
