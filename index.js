@@ -691,7 +691,7 @@ const bridgeETHToArbitrum = async(privateKey) => {
     const address = privateToAddress(privateKey);
     
     try{
-        await getETHAmount(rpc.rpcOptimism, address).then(async(balanceETH) => {
+        await getETHAmount(info.rpcOptimism, address).then(async(balanceETH) => {
             const amountETH = subtract(balanceETH, generateRandomAmount(process.env.ETH_BRIDGE_MIN * 10**18, process.env.ETH_BRIDGE_MAX * 10**18, 0));
             if (Number(amountETH) > 0) {
                 await feeBridgeStargate(info.rpcOptimism, 110, info.StargateRouterOptimism, 0, 0, address).then(async(bridgeFee) => {
@@ -699,7 +699,7 @@ const bridgeETHToArbitrum = async(privateKey) => {
                     await dataBridgeETH(info.rpcOptimism, 110, amountETH, value, info.ETHRouterOptimism, address).then(async(res) => {
                         await getGasPrice(info.rpcOptimism).then(async(gasPrice) => {
                             gasPrice = (parseFloat(gasPrice * 1.5).toFixed(5)).toString();
-                            await sendEVMTX(info.rpcOptimism, 0, res.estimateGas, info.ETHRouterOptimism, value, res.encodeABI, privateKey, gasPrice);
+                            //await sendEVMTX(info.rpcOptimism, 0, res.estimateGas, info.ETHRouterOptimism, value, res.encodeABI, privateKey, gasPrice);
                         });
                     });
                 });
