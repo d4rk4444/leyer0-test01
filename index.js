@@ -699,7 +699,7 @@ const bridgeETHToArbitrum = async(privateKey) => {
                     await dataBridgeETH(info.rpcOptimism, 110, amountETH, value, info.ETHRouterOptimism, address).then(async(res) => {
                         await getGasPrice(info.rpcOptimism).then(async(gasPrice) => {
                             gasPrice = (parseFloat(gasPrice * 1.5).toFixed(5)).toString();
-                            //await sendEVMTX(info.rpcOptimism, 0, res.estimateGas, info.ETHRouterOptimism, value, res.encodeABI, privateKey, gasPrice);
+                            await sendEVMTX(info.rpcOptimism, 0, res.estimateGas, info.ETHRouterOptimism, value, res.encodeABI, privateKey, gasPrice);
                         });
                     });
                 });
