@@ -424,7 +424,7 @@ const mainRandomBridge = async(privateKey) => {
     const numberChain = generateRandomAmount(process.env.NUMBER_CHAIN_MIN, process.env.NUMBER_CHAIN_MAX, 0);
     const allChains = ['Optimism', 'BSC', 'Avalanche'];
     let chainNow = 'Arbitrum';
-    let chainTo = allChains[generateRandomAmount(0, 3, 0)];
+    let chainTo = allChains[generateRandomAmount(0, allChains.length - 1, 0)];
 
     for (let n = 1; n <= numberChain; n++) {
         if (n == 1) {
@@ -692,13 +692,13 @@ const bridgeETHToArbitrum = async(privateKey) => {
     
     try{
         await getETHAmount(info.rpcOptimism, address).then(async(balanceETH) => {
-            const amountETH = subtract(balanceETH, generateRandomAmount(process.env.AMOUNT_ETH_OP_MIN * 10**18, process.env.AMOUNT_ETH_OP_MAX * 10**18, 0));
+            const amountETH = subtract(balanceETH, process.env.AMOUNT_ETH_OP_MIN * 10**18);
             if (amountETH > 0) {
                 await feeBridgeStargate(info.rpcOptimism, 110, info.StargateRouterOptimism, 0, 0, address).then(async(bridgeFee) => {
-                    const value = add(amountETH, bridgeFee);
+                    const value = (add(amountETH, bridgeFee)).toString();
                     await dataBridgeETH(info.rpcOptimism, 110, amountETH, value, info.ETHRouterOptimism, address).then(async(res) => {
                         await getGasPrice(info.rpcOptimism).then(async(gasPrice) => {
-                            gasPrice = (parseFloat(gasPrice * 1.5).toFixed(5)).toString();
+                            gasPrice = (parseFloat(gasPrice * 1.2).toFixed(5)).toString();
                             await sendEVMTX(info.rpcOptimism, 0, res.estimateGas, info.ETHRouterOptimism, value, res.encodeABI, privateKey, gasPrice);
                         });
                     });
@@ -710,7 +710,7 @@ const bridgeETHToArbitrum = async(privateKey) => {
             }
         });
     } catch (err) {
-        logger.log(err.message);
+        logger.log(err);
         console.log(err.message);
         return;
     }

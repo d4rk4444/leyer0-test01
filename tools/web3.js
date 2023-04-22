@@ -118,12 +118,13 @@ export const sendOptimismTX = async(rpc, gasLimit, gasPrice, toAddress, value, d
     });
 }
 
-export const sendEVMTX = async(rpc, typeTx, gasLimit, toAddress, value, data, privateKey, maxFeeOrGasPrice, maxPriorityFee,) => {
+export const sendEVMTX = async(rpc, typeTx, gasLimit, toAddress, value, data, privateKey, maxFeeOrGasPrice, maxPriorityFee) => {
     const w3 = new Web3(new Web3.providers.HttpProvider(rpc));
     const fromAddress = privateToAddress(privateKey);
+    let tx;
     
-    const tx = {
-        0: {
+    if (typeTx == 0) {
+        tx = {
             'from': fromAddress,
             'gas': gasLimit,
             'gasPrice': w3.utils.toWei(maxFeeOrGasPrice, 'Gwei'),
@@ -132,8 +133,9 @@ export const sendEVMTX = async(rpc, typeTx, gasLimit, toAddress, value, data, pr
             'nonce': await w3.eth.getTransactionCount(fromAddress),
             'value': value,
             'data': data
-        },
-        2: {
+        }
+    } else if (typeTx == 2) {
+        tx = {
             'from': fromAddress,
             'gas': gasLimit,
             'maxFeePerGas': w3.utils.toWei(maxFeeOrGasPrice, 'Gwei'),
@@ -144,9 +146,9 @@ export const sendEVMTX = async(rpc, typeTx, gasLimit, toAddress, value, data, pr
             'value': value,
             'data': data
         }
-    };
+    }
 
-    const signedTx = await w3.eth.accounts.signTransaction(tx[typeTx], privateKey);
+    const signedTx = await w3.eth.accounts.signTransaction(tx, privateKey);
     await w3.eth.sendSignedTransaction(signedTx.rawTransaction, async(error, hash) => {
         if (!error) {
             const chain = (Object.keys(info)[Object.values(info).findIndex(e => e == rpc)]).slice(3);
