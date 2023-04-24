@@ -784,7 +784,7 @@ const withdrawETHToSubWalletBSC = async(toAddress, privateKey) => {
 
     try {
         await getETHAmount(info.rpcBSC, addressETH).then(async(amountETH) => {
-            gasPrice = '5';
+            let gasPrice = '5';
             amountETH = subtract(amountETH, 21000 * multiply(5.1, 10**9));
             await sendEVMTX(info.rpcBSC, 0, 21000, toAddress, amountETH, null, privateKey, gasPrice);
             
@@ -826,7 +826,7 @@ const withdrawETHToSubWalletAvalanche = async(toAddress, privateKey) => {
         await getETHAmount(info.rpcAvalanche, addressETH).then(async(amountETH) => {
             await getGasPrice(info.rpcAvalanche).then(async(gasPrice) => {
                 gasPrice = (parseFloat(multiply(gasPrice, 1.5)).toFixed(5)).toString();
-                amountETH = subtract(amountETH, 21000 * multiply(gasPrice, 10**9));
+                amountETH = subtract(amountETH, 21010 * multiply(gasPrice, 10**9));
                 await sendEVMTX(info.rpcAvalanche, 0, 21000, toAddress, amountETH, null, privateKey, gasPrice);
                 
                 console.log(chalk.yellow(`Send ${amountETH / 10**18}ETH to ${toAddress} Avalanche`));
