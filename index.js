@@ -21,6 +21,7 @@ import readline from 'readline-sync';
 import consoleStamp from 'console-stamp';
 import chalk from 'chalk';
 import * as dotenv from 'dotenv';
+import { mintHoloNFT } from './tools/NFT.js';
 dotenv.config();
 
 const output = fs.createWriteStream(`history.log`, { flags: 'a' });
@@ -840,6 +841,25 @@ const withdrawETHToSubWalletAvalanche = async(toAddress, privateKey) => {
     }
 }
 
+const mintNFTHolo = async(privateKey) => {
+    const address = privateToAddress(privateKey);
+
+    try {
+        await getGasPrice(info.rpcAvalanche).then(async(gasPrice) => {
+            gasPrice = (parseFloat(multiply(gasPrice, 1.2)).toFixed(5)).toString();
+            await mintHoloNFT(info.rpcAvalanche, address).then(async(res) => {
+                await sendEVMTX(info.rpcAvalanche, 0, res.estimateGas, info.GleamNFT, null, res.encodeABI, privateKey, gasPrice);
+                console.log(chalk.yellow(`Mint NFT Successful`));
+                logger.log(`Mint NFT Successful`);
+            });
+        });
+    } catch (err) {
+        logger.log(err);
+        console.log(err.message);
+        return;
+    }
+}
+
 (async() => {
     const wallet = parseFile('private.txt');
     const walletOKX = parseFile('subWallet.txt');
@@ -878,6 +898,7 @@ const withdrawETHToSubWalletAvalanche = async(toAddress, privateKey) => {
         'Send to SubWallet BSC',
         'Send to SubWallet Polygon',
         'Send to SubWallet Avalanche',
+        'Mint GLEAM NFT Holo',
     ];
 
     const index = readline.keyInSelect(allStage, 'Choose stage!');
@@ -968,6 +989,8 @@ const withdrawETHToSubWalletAvalanche = async(toAddress, privateKey) => {
             await withdrawETHToSubWalletPolygon(walletOKX[i], wallet[i]);
         } else if (index4 == 3) {
             await withdrawETHToSubWalletAvalanche(walletOKX[i], wallet[i]);
+        } else if (index4 == 4) {
+            await mintNFTHolo(wallet[i]);
         }
 
         await timeout(pauseWalletTime);

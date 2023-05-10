@@ -28,6 +28,7 @@ export const info = {
     StargateRouterOptimism: '0xB0D502E938ed5f4df2E681fE6E419ff29631d62b',
     ETHRouterArbitrum: '0xbf22f0f184bCcbeA268dF387a49fF5238dD23E40',
     ETHRouterOptimism: '0xB49c4e680174E331CB0A7fF3Ab58afC9738d5F8b',
+    GleamNFT: '0x4803e859a2e325dc8f6adcd23ea682e323f59640',
     approveAmount: '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
 }
 
