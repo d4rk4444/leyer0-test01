@@ -12,7 +12,7 @@ import { checkAllowance,
     sendArbitrumTX,
     sendOptimismTX,
     sendEVMTX } from './tools/web3.js';
-import { dataTraderSwapETHToToken, dataTraderSwapTokenToETH  } from './tools/DEX.js';
+import { dataTraderJoeSwapETHToToken, dataTraderJoeSwapTokenToETH  } from './tools/DEX.js';
 import { lzAdapterParamsToBytes, feeBridgeBTC, dataBridgeBTC } from './tools/bridgeBTC.js';
 import { feeBridgeStargate, dataBridgeETH } from './tools/bridgeETH.js';
 import { subtract, multiply, divide, composition, add } from 'mathjs';
@@ -22,6 +22,8 @@ import consoleStamp from 'console-stamp';
 import chalk from 'chalk';
 import * as dotenv from 'dotenv';
 import { mintHoloNFT } from './tools/NFT.js';
+import { dataBridgeCore, feeBridgeCore } from './tools/coredao.js';
+import { dataBridgeHarmony, feeBridgeHarmony, lzAdapterParamsHarmony } from './tools/harmony.js';
 dotenv.config();
 
 const output = fs.createWriteStream(`history.log`, { flags: 'a' });
@@ -91,7 +93,7 @@ const circeBTCBridge = async(privateKey) => {
                     logger.log(`Swap ${amountETH / 10**18}ETH -> BTCb`);
                     await dataTraderSwapETHToToken(info.rpcArbitrum, info.BTCb, info.WETHBTCBLPArbitrum, amountETH, address, slippage).then(async(res) => {
                         await getGasPrice(info.rpcArbitrum).then(async(gasPrice) => {
-                            await sendArbitrumTX(info.rpcArbitrum, res.estimateGas, gasPrice, gasPrice, info.traderJoeArbitrumRouter, amountETH, res.encodeABI, privateKey);
+                            await sendArbitrumTX(info.rpcArbitrum, res.estimateGas, gasPrice, gasPrice, info.routerTraderJoe, amountETH, res.encodeABI, privateKey);
                         });
                     });
 
@@ -184,11 +186,11 @@ const circeBTCBridge = async(privateKey) => {
         logger.log(`Approve BTCb TraderJoe`);
         try {
             await getAmountToken(info.rpcArbitrum, info.BTCb, address).then(async(amountBTCb) => {
-                await checkAllowance(info.rpcArbitrum, info.BTCb, address, info.traderJoeArbitrumRouter).then(async(res) => {
+                await checkAllowance(info.rpcArbitrum, info.BTCb, address, info.routerTraderJoe).then(async(res) => {
                     if (Number(res) < amountBTCb) {
                         console.log(chalk.yellow(`Start Approve BTCb for Router`));
                         logger.log(`Start Approve BTCb for Router`);
-                        await dataApprove(info.rpcArbitrum, info.BTCb, info.traderJoeArbitrumRouter, address).then(async(res1) => {
+                        await dataApprove(info.rpcArbitrum, info.BTCb, info.routerTraderJoe, address).then(async(res1) => {
                             await getGasPrice(info.rpcArbitrum).then(async(gasPrice) => {
                                 await sendArbitrumTX(info.rpcArbitrum, res1.estimateGas, gasPrice, gasPrice, info.BTCb, null, res1.encodeABI, privateKey);
                             });
@@ -216,7 +218,7 @@ const circeBTCBridge = async(privateKey) => {
             await getAmountToken(info.rpcArbitrum, info.BTCb, address).then(async(amountBTCb) => {
                 await dataTraderSwapTokenToETH(info.rpcArbitrum, info.BTCb, info.WETHBTCBLPArbitrum, amountBTCb, address, slippage).then(async(res) => {
                     await getGasPrice(info.rpcArbitrum).then(async(gasPrice) => {
-                        await sendArbitrumTX(info.rpcArbitrum, res.estimateGas, gasPrice, gasPrice, info.traderJoeArbitrumRouter, null, res.encodeABI, privateKey);
+                        await sendArbitrumTX(info.rpcArbitrum, res.estimateGas, gasPrice, gasPrice, info.routerTraderJoe, null, res.encodeABI, privateKey);
                     });
                 });
             })
@@ -394,7 +396,7 @@ const mainRandomBridge = async(privateKey) => {
                     logger.log(`Swap ${amountETH / 10**18}ETH -> BTCb`);
                     await dataTraderSwapETHToToken(info.rpcArbitrum, info.BTCb, info.WETHBTCBLPArbitrum, amountETH, address, slippage).then(async(res) => {
                         await getGasPrice(info.rpcArbitrum).then(async(gasPrice) => {
-                            await sendArbitrumTX(info.rpcArbitrum, res.estimateGas, gasPrice, gasPrice, info.traderJoeArbitrumRouter, amountETH, res.encodeABI, privateKey);
+                            await sendArbitrumTX(info.rpcArbitrum, res.estimateGas, gasPrice, gasPrice, info.routerTraderJoe, amountETH, res.encodeABI, privateKey);
                         });
                     });
 
@@ -539,11 +541,11 @@ const mainRandomBridge = async(privateKey) => {
         logger.log(`Approve BTCb TraderJoe`);
         try {
             await getAmountToken(info.rpcArbitrum, info.BTCb, address).then(async(amountBTCb) => {
-                await checkAllowance(info.rpcArbitrum, info.BTCb, address, info.traderJoeArbitrumRouter).then(async(res) => {
+                await checkAllowance(info.rpcArbitrum, info.BTCb, address, info.routerTraderJoe).then(async(res) => {
                     if (Number(res) < amountBTCb) {
                         console.log(chalk.yellow(`Start Approve BTCb for Router`));
                         logger.log(`Start Approve BTCb for Router`);
-                        await dataApprove(info.rpcArbitrum, info.BTCb, info.traderJoeArbitrumRouter, address).then(async(res1) => {
+                        await dataApprove(info.rpcArbitrum, info.BTCb, info.routerTraderJoe, address).then(async(res1) => {
                             await getGasPrice(info.rpcArbitrum).then(async(gasPrice) => {
                                 await sendArbitrumTX(info.rpcArbitrum, res1.estimateGas, gasPrice, gasPrice, info.BTCb, null, res1.encodeABI, privateKey);
                             });
@@ -571,7 +573,7 @@ const mainRandomBridge = async(privateKey) => {
             await getAmountToken(info.rpcArbitrum, info.BTCb, address).then(async(amountBTCb) => {
                 await dataTraderSwapTokenToETH(info.rpcArbitrum, info.BTCb, info.WETHBTCBLPArbitrum, amountBTCb, address, slippage).then(async(res) => {
                     await getGasPrice(info.rpcArbitrum).then(async(gasPrice) => {
-                        await sendArbitrumTX(info.rpcArbitrum, res.estimateGas, gasPrice, gasPrice, info.traderJoeArbitrumRouter, null, res.encodeABI, privateKey);
+                        await sendArbitrumTX(info.rpcArbitrum, res.estimateGas, gasPrice, gasPrice, info.routerTraderJoe, null, res.encodeABI, privateKey);
                     });
                 });
             })
@@ -609,11 +611,11 @@ const swapBTCBToETH = async(privateKey) => {
         logger.log(`Approve BTCb TraderJoe`);
         try {
             await getAmountToken(info.rpcArbitrum, info.BTCb, address).then(async(amountBTCb) => {
-                await checkAllowance(info.rpcArbitrum, info.BTCb, address, info.traderJoeArbitrumRouter).then(async(res) => {
+                await checkAllowance(info.rpcArbitrum, info.BTCb, address, info.routerTraderJoe).then(async(res) => {
                     if (Number(res) < amountBTCb) {
                         console.log(chalk.yellow(`Start Approve BTCb for Router`));
                         logger.log(`Start Approve BTCb for Router`);
-                        await dataApprove(info.rpcArbitrum, info.BTCb, info.traderJoeArbitrumRouter, address).then(async(res1) => {
+                        await dataApprove(info.rpcArbitrum, info.BTCb, info.routerTraderJoe, address).then(async(res1) => {
                             await getGasPrice(info.rpcArbitrum).then(async(gasPrice) => {
                                 await sendArbitrumTX(info.rpcArbitrum, res1.estimateGas, gasPrice, gasPrice, info.BTCb, null, res1.encodeABI, privateKey);
                             });
@@ -640,7 +642,7 @@ const swapBTCBToETH = async(privateKey) => {
             await getAmountToken(info.rpcArbitrum, info.BTCb, address).then(async(amountBTCb) => {
                 await dataTraderSwapTokenToETH(info.rpcArbitrum, info.BTCb, info.WETHBTCBLPArbitrum, amountBTCb, address, slippage).then(async(res) => {
                     await getGasPrice(info.rpcArbitrum).then(async(gasPrice) => {
-                        await sendArbitrumTX(info.rpcArbitrum, res.estimateGas, gasPrice, gasPrice, info.traderJoeArbitrumRouter, null, res.encodeABI, privateKey);
+                        await sendArbitrumTX(info.rpcArbitrum, res.estimateGas, gasPrice, gasPrice, info.routerTraderJoe, null, res.encodeABI, privateKey);
                     });
                 });
             })
@@ -739,7 +741,6 @@ const bridgeAllETHToArbitrum = async(privateKey) => {
                             console.log(amountFee);
                             await feeBridgeStargate(info.rpcOptimism, 110, info.StargateRouterOptimism, 0, 0, address).then(async(bridgeFee) => {
                                 amountETH = subtract(balanceETH, add(amountFee, bridgeFee));
-                                console.log(amountETH);
                                 const value = add(amountETH, bridgeFee);
                                 await dataBridgeETH(info.rpcOptimism, 110, amountETH, value, info.ETHRouterOptimism, address).then(async(res1) => {
                                     await sendOptimismTX(info.rpcOptimism, res1.estimateGas, gasPriceOP, info.ETHRouterOptimism, value, res1.encodeABI, privateKey);
@@ -759,100 +760,107 @@ const bridgeAllETHToArbitrum = async(privateKey) => {
 
 //============================================================
 
-const withdrawETHToSubWalletArbitrum = async(toAddress, privateKey) => {
-    const addressETH = privateToAddress(privateKey);
+const swapETHToTokenRandomBSC = async(privateKey) => {
+    const address = privateToAddress(privateKey);
+    const random = generateRandomAmount(process.env.PERCENT_BRIDGE_MIN / 100, process.env.PERCENT_BRIDGE_MAX / 100, 3);
+
+    const chains = ['BSC'];
+    const tokens = ['USDT', 'USDC'];
+    const chain = chains[generateRandomAmount(0, chains.length - 1, 0)];
+    const ticker = tokens[generateRandomAmount(0, tokens.length - 1, 0)];
+    const native = info.wBNB;
+    const rpc = info['rpc' + chain];
+    const token = info['bsc' + ticker];
 
     try {
-        await getETHAmount(info.rpcArbitrum, addressETH).then(async(amountETH) => {
-            await getGasPrice(info.rpcArbitrum).then(async(gasPrice) => {
-                gasPrice = (parseFloat(multiply(gasPrice, 1.2)).toFixed(5)).toString();
-                amountETH = subtract(amountETH, 1100000 * multiply(gasPrice, 10**9));
-                await sendEVMTX(info.rpcArbitrum, 2, generateRandomAmount(900000, 1000000, 0), toAddress, amountETH, null, privateKey, gasPrice, gasPrice);
-                
-                console.log(chalk.yellow(`Send ${amountETH / 10**18}ETH to ${toAddress} Arbitrum`));
-                logger.log(`Send ${amountETH / 10**18}ETH to ${toAddress} Arbitrum`);
+        await getETHAmount(rpc, address).then(async(balanceETH) => {
+            const amountETH = parseInt(multiply(balanceETH, random));
+            console.log(`Swap ${parseFloat(amountETH/10**18).toFixed(4)}ETH for ${ticker} in ${chain}`);
+            logger.log(`Swap ${parseFloat(amountETH/10**18).toFixed(4)}ETH for ${ticker} in ${chain}`);
+            await dataTraderJoeSwapETHToToken(rpc, native, token, amountETH, address, slippage).then(async(res) => {
+                await getGasPrice(rpc).then(async(gasPrice) => {
+                    gasPrice = parseFloat(multiply(gasPrice, 1.2)).toFixed(4);
+                    const typeTX = chain == 'Arbitrum' ? 2 : 0;
+                    await sendEVMTX(rpc, typeTX, res.estimateGas, info.routerTraderJoe, amountETH, res.encodeABI, privateKey, gasPrice, gasPrice);
+                });
             });
         });
     } catch (err) {
-        logger.log(err.message);
-        console.log(err.message);
+        logger.log(err);
+        console.log(chalk.red(err.message));
         return;
     }
 }
 
-const withdrawETHToSubWalletBSC = async(toAddress, privateKey) => {
-    const addressETH = privateToAddress(privateKey);
+const swapETHToTokenRandomARB = async(privateKey) => {
+    const address = privateToAddress(privateKey);
+    const random = generateRandomAmount(process.env.PERCENT_BRIDGE_MIN / 100, process.env.PERCENT_BRIDGE_MAX / 100, 3);
+
+    const chains = ['Arbitrum'];
+    const tokens = ['USDT', 'USDC'];
+    const chain = chains[generateRandomAmount(0, chains.length - 1, 0)];
+    const ticker = tokens[generateRandomAmount(0, tokens.length - 1, 0)];
+    const native = info.wETH;
+    const rpc = info['rpc' + chain];
+    const token = info['arb' + ticker];
 
     try {
-        await getETHAmount(info.rpcBSC, addressETH).then(async(amountETH) => {
-            let gasPrice = '5';
-            amountETH = subtract(amountETH, 21000 * multiply(5.1, 10**9));
-            await sendEVMTX(info.rpcBSC, 0, 21000, toAddress, amountETH, null, privateKey, gasPrice);
-            
-            console.log(chalk.yellow(`Send ${amountETH / 10**18}ETH to ${toAddress} BSC`));
-            logger.log(`Send ${amountETH / 10**18}ETH to ${toAddress} BSC`);
-        });
-    } catch (err) {
-        logger.log(err.message);
-        console.log(err.message);
-        return;
-    }
-}
-
-const withdrawETHToSubWalletPolygon = async(toAddress, privateKey) => {
-    const addressETH = privateToAddress(privateKey);
-
-    try {
-        await getETHAmount(info.rpcPolygon, addressETH).then(async(amountETH) => {
-            await getGasPrice(info.rpcPolygon).then(async(gasPrice) => {
-                gasPrice = (parseFloat(multiply(gasPrice, 1.5)).toFixed(5)).toString();
-                amountETH = subtract(amountETH, 21000 * multiply(add(gasPrice, 30), 10**9));
-                await sendEVMTX(info.rpcPolygon, 2, 21000, toAddress, amountETH, null, privateKey, gasPrice, '30');
-                
-                console.log(chalk.yellow(`Send ${amountETH / 10**18}ETH to ${toAddress} Polygon`));
-                logger.log(`Send ${amountETH / 10**18}ETH to ${toAddress} Polygon`);
+        await getETHAmount(rpc, address).then(async(balanceETH) => {
+            const amountETH = parseInt(multiply(balanceETH, random));
+            console.log(`Swap ${parseFloat(amountETH/10**18).toFixed(4)}ETH for ${ticker} in ${chain}`);
+            logger.log(`Swap ${parseFloat(amountETH/10**18).toFixed(4)}ETH for ${ticker} in ${chain}`);
+            await dataTraderJoeSwapETHToToken(rpc, native, token, amountETH, address, slippage).then(async(res) => {
+                await getGasPrice(rpc).then(async(gasPrice) => {
+                    gasPrice = parseFloat(multiply(gasPrice, 1.2)).toFixed(4);
+                    const typeTX = chain == 'Arbitrum' ? 2 : 0;
+                    await sendEVMTX(rpc, typeTX, res.estimateGas, info.routerTraderJoe, amountETH, res.encodeABI, privateKey, gasPrice, gasPrice);
+                });
             });
         });
     } catch (err) {
-        logger.log(err.message);
-        console.log(err.message);
+        logger.log(err);
+        console.log(chalk.red(err.message));
         return;
     }
 }
 
-const withdrawETHToSubWalletAvalanche = async(toAddress, privateKey) => {
-    const addressETH = privateToAddress(privateKey);
-
-    try {
-        await getETHAmount(info.rpcAvalanche, addressETH).then(async(amountETH) => {
-            await getGasPrice(info.rpcAvalanche).then(async(gasPrice) => {
-                gasPrice = (parseFloat(multiply(gasPrice, 1.5)).toFixed(5)).toString();
-                amountETH = subtract(amountETH, 21010 * multiply(gasPrice, 10**9));
-                await sendEVMTX(info.rpcAvalanche, 0, 21000, toAddress, amountETH, null, privateKey, gasPrice);
-                
-                console.log(chalk.yellow(`Send ${amountETH / 10**18}ETH to ${toAddress} Avalanche`));
-                logger.log(`Send ${amountETH / 10**18}ETH to ${toAddress} Avalanche`);
-            });
-        });
-    } catch (err) {
-        logger.log(err.message);
-        console.log(err.message);
-        return;
-    }
-}
-
-const mintNFTHolo = async(privateKey) => {
+const bridgeTokenToCore = async(privateKey) => {
     const address = privateToAddress(privateKey);
 
-    try {
-        await getGasPrice(info.rpcAvalanche).then(async(gasPrice) => {
-            gasPrice = (parseFloat(multiply(gasPrice, 1.2)).toFixed(5)).toString();
-            await mintHoloNFT(info.rpcAvalanche, address).then(async(res) => {
-                await sendEVMTX(info.rpcAvalanche, 0, res.estimateGas, info.GleamNFT, null, res.encodeABI, privateKey, gasPrice);
-                console.log(chalk.yellow(`Mint NFT Successful`));
-                logger.log(`Mint NFT Successful`);
+    try{
+        const rpc = info.rpcBSC;
+        const tokens = [info.bscUSDT, info.bscUSDC];
+        for (let i = 0; i < tokens.length; i++) {
+            await getAmountToken(rpc, tokens[i], address).then(async(balanceToken) => {
+                const token = tokens[i] == info.bscUSDC ? 'USDC' : 'USDT';
+                if (balanceToken > 0) {
+                    await getGasPrice(rpc).then(async(gasPrice) => {
+                        gasPrice = (parseFloat(gasPrice * 1.2).toFixed(4)).toString();
+                        await checkAllowance(rpc, tokens[i], address, info.bridgeCoreBSC).then(async(allowance) => {
+                            if (allowance < balanceToken) {
+                                await dataApprove(rpc, tokens[i], info.bridgeCoreBSC, address).then(async(res) => {
+                                    await sendEVMTX(rpc, 0, res.estimateGas, tokens[i], null, res.encodeABI, privateKey, gasPrice);
+                                    logger.log(`Approve ${token} for CoreDAO Bridge`);
+                                    console.log(chalk.magentaBright(`Approve ${token} for CoreDAO Bridge`));
+                                })
+                            }
+                        });
+
+                        await timeout(pauseTime);
+                        await feeBridgeCore(rpc, false, 0, '0x', info.bridgeCoreBSC).then(async(bridgeFee) => {
+                            await dataBridgeCore(rpc, false, 0, tokens[i], balanceToken, '0x', bridgeFee, info.bridgeCoreBSC, address).then(async(res) => {   
+                                await sendEVMTX(rpc, 0, res.estimateGas, info.bridgeCoreBSC, bridgeFee, res.encodeABI, privateKey, gasPrice);
+                                logger.log(`Bridge All ${token} to CoreDAO`);
+                                console.log(chalk.magentaBright(`Bridge All ${token} to CoreDAO`));
+                            });
+                        });
+                    });
+                } else if (balanceToken == 0) {
+                    logger.log(`Balance ${token} = 0. Check next token.`);
+                    console.log(chalk.yellow(`Balance ${token} = 0. Check next token.`));
+                }
             });
-        });
+        }
     } catch (err) {
         logger.log(err);
         console.log(err.message);
@@ -860,9 +868,157 @@ const mintNFTHolo = async(privateKey) => {
     }
 }
 
+const bridgeTokenFromCore = async(privateKey) => {
+    const address = privateToAddress(privateKey);
+
+    try{
+        const tokens = [info.coreUSDC, info.coreUSDT];
+        const rpc = info.rpcCore;
+        for (let i = 0; i < tokens.length; i++) {
+            await getAmountToken(rpc, tokens[i], address).then(async(balanceToken) => {
+                const token = tokens[i] == info.coreUSDC ? 'USDC' : 'USDT';
+                if (balanceToken > 0) {
+                    await getGasPrice(rpc).then(async(gasPrice) => {
+                        gasPrice = (parseFloat(gasPrice * 1.2).toFixed(4)).toString();
+                        await checkAllowance(rpc, tokens[i], address, info.bridgeCoreCORE).then(async(allowance) => {
+                            if (allowance < balanceToken) {
+                                await dataApprove(rpc, tokens[i], info.bridgeCoreCORE, address).then(async(res) => {
+                                    await sendEVMTX(rpc, 0, res.estimateGas, tokens[i], null, res.encodeABI, privateKey, gasPrice);
+                                    logger.log(`Approve ${token} for CoreDAO Bridge`);
+                                    console.log(chalk.magentaBright(`Approve ${token} for CoreDAO Bridge`));
+                                })
+                            }
+                        });
+
+                        await timeout(pauseTime);
+                        await feeBridgeCore(rpc, true, info.chainIdBSC, '0x', info.bridgeCoreCORE).then(async(bridgeFee) => {
+                            await dataBridgeCore(rpc, true, info.chainIdBSC, tokens[i], balanceToken, '0x', bridgeFee, info.bridgeCoreCORE, address).then(async(res) => {
+                                await sendEVMTX(rpc, 0, res.estimateGas, info.bridgeCoreCORE, bridgeFee, res.encodeABI, privateKey, gasPrice);
+                                logger.log(`Bridge All ${token} CoreDAO -> BSC`);
+                                console.log(chalk.magentaBright(`Bridge All ${token} CoreDAO -> BSC`));
+                            });
+                        });
+                    });
+                } else if (balanceToken == 0) {
+                    logger.log(`Balance ${token} = 0. Check next token.`);
+                    console.log(chalk.yellow(`Balance ${token} = 0. Check next token.`));
+                }
+            });
+        }
+    } catch (err) {
+        logger.log(err);
+        console.log(err.message);
+        return;
+    }
+}
+
+const bridgeTokenToHarmony = async(privateKey) => {
+    const address = privateToAddress(privateKey);
+
+    try{
+        const rpc = [info.rpcBSC, info.rpcArbitrum];
+        const tokens = [info.bscUSDC, info.bscUSDT, info.arbUSDC, info.arbUSDT];
+        for (let i = 0; i < rpc.length; i++) {
+            let n = rpc[i] == info.rpcBSC ? 0 : 2;
+            const length = rpc[i] == info.rpcBSC ? 2 : 4;
+            for (n; n < length; n++) {
+                await getAmountToken(rpc[i], tokens[n], address).then(async(balanceToken) => {
+                    const token = tokens[n] == info.bscUSDC || tokens[n] == info.arbUSDC ? 'USDC' : 'USDT';
+                    const router = tokens[n] == info.bscUSDC ? info.bridgeHarmonyUSDCBSC
+                        : tokens[n] == info.bscUSDT ? info.bridgeHarmonyUSDTBSC
+                        : tokens[n] == info.arbUSDC ? info.bridgeHarmonyUSDCARB
+                        : info.bridgeHarmonyUSDTARB;
+                    const typeTX = rpc[i] == info.rpcArbitrum ? 2 : 0;
+                    if (balanceToken > 0) {
+                        await getGasPrice(rpc[i]).then(async(gasPrice) => {
+                            gasPrice = (parseFloat(gasPrice * 1.2).toFixed(4)).toString();
+                            await checkAllowance(rpc[i], tokens[n], address, router).then(async(allowance) => {
+                                if (allowance < balanceToken) {
+                                    await dataApprove(rpc[i], tokens[n], router, address).then(async(res) => {
+                                        await sendEVMTX(rpc[i], typeTX, res.estimateGas, tokens[n], null, res.encodeABI, privateKey, gasPrice, gasPrice);
+                                        logger.log(`Approve ${token} for Harmony Bridge`);
+                                        console.log(chalk.magentaBright(`Approve ${token} for Harmony Bridge`));
+                                    })
+                                }
+                            });
+
+                            await timeout(pauseTime);
+                            await feeBridgeHarmony(rpc[i], info.chainIdHarmony, balanceToken, router, 1, 300000, address).then(async(bridgeFee) => {
+                                await dataBridgeHarmony(rpc[i], balanceToken, info.chainIdHarmony, '0x', bridgeFee, router, address).then(async(res) => {
+                                    await sendEVMTX(rpc[i], typeTX, res.estimateGas, router, bridgeFee, res.encodeABI, privateKey, gasPrice, gasPrice);
+                                    logger.log(`Bridge All ${token} BSC -> Harmony`);
+                                    console.log(chalk.magentaBright(`Bridge All ${token} BSC -> Harmony`));
+                                });
+                            });
+                        });
+                    } else if (balanceToken == 0) {
+                        logger.log(`Balance ${token} = 0. Check next token.`);
+                        console.log(chalk.yellow(`Balance ${token} = 0. Check next token.`));
+                    }
+                });
+            }
+        }
+    } catch (err) {
+        logger.log(err);
+        console.log(err.message);
+        return;
+    }
+}
+
+const bridgeTokenFromHarmony = async(privateKey) => {
+    const address = privateToAddress(privateKey);
+
+    try{
+        const rpc = info.rpcHarmony;
+        const tokens = [info.oneBSCUSDC, info.oneBSCUSDT, info.oneARBUSDC, info.oneARBUSDT];
+        for (let i = 0; i < tokens.length; i++) {
+            await getAmountToken(rpc, tokens[i], address).then(async(balanceToken) => {
+                const token = tokens[i] == info.oneBSCUSDC || tokens[i] == info.oneARBUSDC ? 'USDC' : 'USDT';
+                const router = tokens[i] == info.oneBSCUSDC ? info.bridgeHarmonyBSCUSDCONE
+                    : tokens[i] == info.oneBSCUSDT ? info.bridgeHarmonyBSCUSDTONE
+                    : tokens[i] == info.oneARBUSDC ? info.bridgeHarmonyARBUSDCONE
+                    : info.bridgeHarmonyARBUSDTONE;
+                const dstChain = tokens[i] == info.oneBSCUSDC || tokens[i] == info.oneBSCUSDT ? info.chainIdBSC : info.chainIdArbitrum;
+                if (balanceToken > 0) {
+                    await getGasPrice(rpc).then(async(gasPrice) => {
+                        gasPrice = (parseFloat(gasPrice * 1.2).toFixed(4)).toString();
+                        await checkAllowance(rpc, tokens[i], address, router).then(async(allowance) => {
+                            if (allowance < balanceToken) {
+                                await dataApprove(rpc, tokens[i], router, address).then(async(res) => {
+                                    await sendEVMTX(rpc, 0, res.estimateGas, tokens[i], null, res.encodeABI, privateKey, gasPrice);
+                                    logger.log(`Approve ${token} for Harmony Bridge`);
+                                    console.log(chalk.magentaBright(`Approve ${token} for Harmony Bridge`));
+                                })
+                            }
+                        });
+
+                        await timeout(pauseTime);
+                        await feeBridgeHarmony(rpc, dstChain, balanceToken, router, 1, 300000, address).then(async(bridgeFee) => {
+                            await dataBridgeHarmony(rpc, balanceToken, dstChain, '0x', bridgeFee, router, address).then(async(res) => {
+                                await sendEVMTX(rpc, 0, res.estimateGas, router, bridgeFee, res.encodeABI, privateKey, gasPrice);
+                                logger.log(`Bridge All ${token} from Harmony to Chain`);
+                                console.log(chalk.magentaBright(`Bridge All ${token} from Harmony to Chain`));
+                            });
+                        });
+                    });
+                } else if (balanceToken == 0) {
+                    logger.log(`Check next token`);
+                    console.log(chalk.yellow(`Check next token`));
+                }
+            });
+        }
+    } catch (err) {
+        logger.log(err);
+        console.log(err.message);
+        return;
+    }
+}
+
+
+//============================================================
+
 (async() => {
     const wallet = parseFile('private.txt');
-    const walletOKX = parseFile('subWallet.txt');
     const allStage = [
         'MAIN',
         'ALL BRIDGE',
@@ -894,11 +1050,12 @@ const mintNFTHolo = async(privateKey) => {
         
     ];
     const otherStage = [
-        'Send to SubWallet Arbitrum',
-        'Send to SubWallet BSC',
-        'Send to SubWallet Polygon',
-        'Send to SubWallet Avalanche',
-        'Mint GLEAM NFT Holo',
+        'Random Swap USDT/USDC BSC',
+        'Random Swap USDT/USDC Arbitrum',
+        'Bridge Token to Core',
+        'Bridge Token from Core',
+        'Bridge Token to Harmony',
+        'Bridge Token from Harmony',
     ];
 
     const index = readline.keyInSelect(allStage, 'Choose stage!');
@@ -982,15 +1139,17 @@ const mintNFTHolo = async(privateKey) => {
         } else if (index3 == 1) {
             await bridgeAllETHToArbitrum(wallet[i]);
         } else if (index4 == 0) { //OTHER
-            await withdrawETHToSubWalletArbitrum(walletOKX[i], wallet[i]);
+            await swapETHToTokenRandomBSC(wallet[i]);
         } else if (index4 == 1) {
-            await withdrawETHToSubWalletBSC(walletOKX[i], wallet[i]);
+            await swapETHToTokenRandomARB(wallet[i]);
         } else if (index4 == 2) {
-            await withdrawETHToSubWalletPolygon(walletOKX[i], wallet[i]);
+            await bridgeTokenToCore(wallet[i]);
         } else if (index4 == 3) {
-            await withdrawETHToSubWalletAvalanche(walletOKX[i], wallet[i]);
+            await bridgeTokenFromCore(wallet[i]);
         } else if (index4 == 4) {
-            await mintNFTHolo(wallet[i]);
+            await bridgeTokenToHarmony(wallet[i]);
+        } else if (index4 == 5) {
+            await bridgeTokenFromHarmony(wallet[i]);
         }
 
         await timeout(pauseWalletTime);

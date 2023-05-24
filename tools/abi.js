@@ -47,7 +47,45 @@ export const abiToken = [
     }
   ]
 
-export const traderJoeAbi = [
+  export const traderJoeAbi = [
+    {
+        "type":"function",
+        "name":"getAllLBPairs",
+        "inputs": [
+            {"name":"tokenX","type":"address"},
+            {"name":"tokenY","type":"address"},
+        ],
+        "outputs": [
+            {
+                "name":"lbPairsAvailable",
+                "type":"tuple[]",
+                "components": [{
+                    "name": "binStep",
+                    "type": "uint16"
+                },
+                {
+                    "name": "LBPair",
+                    "type": "address"
+                },
+                {
+                    "name": "createdByOwner",
+                    "type": "bool"
+                },
+                {
+                    "name":"ignoredForRouting",
+                    "type":"bool"
+                }]
+            },
+        ]
+    },
+    {
+        "type":"function",
+        "name":"getTokenY",
+        "inputs": [],
+        "outputs": [
+            {"name":"tokenY","type":"address"}
+        ]
+    },
     {
         "type":"function",
         "name":"getSwapIn",
@@ -127,7 +165,7 @@ export const traderJoeAbi = [
             {"name":"deadline","type":"uint256"}
         ]
     },
-]
+];
 
 export const bridgeBTCAbi = [
     {
@@ -219,3 +257,108 @@ export const bridgeStargateAbi = [
         ],
     },
 ]
+
+export const coreAbi = [
+    {
+        "type":"function",
+        "name":"estimateBridgeFee",
+        "inputs": [
+            {"name":"useZro","type":"bool"},
+            {"name":"adapterParams","type":"bytes"}
+        ],
+        "outputs": [
+            {"name":"nativeFee","type":"uint256"},
+            {"name":"zroFee","type":"uint256"},
+        ]
+    },
+    {
+        "type":"function",
+        "name":"estimateBridgeFee",
+        "inputs": [
+            {"name":"remoteChainId","type":"uint16"},
+            {"name":"useZro","type":"bool"},
+            {"name":"adapterParams","type":"bytes"}
+        ],
+        "outputs": [
+            {"name":"nativeFee","type":"uint256"},
+            {"name":"zroFee","type":"uint256"},
+        ]
+    },
+    {
+        "type":"function",
+        "name":"bridge",
+        "inputs": [
+            {"name":"token","type":"address"},
+            {"name":"amountLD","type":"uint256"},
+            {"name":"to","type":"address"},
+            {
+                "name":"_callParams",
+                "type":"tuple",
+                "components": [{
+                    "name": "refundAddress",
+                    "type": "address"
+                },
+                {
+                    "name": "zroPaymentAddress",
+                    "type": "address"
+                }]
+            },
+            {"name":"adapterParams","type":"bytes"}
+        ]
+    },
+    {
+        "type":"function",
+        "name":"bridge",
+        "inputs": [
+            {"name":"token","type":"address"},
+            {"name":"remoteChainId","type":"uint16"},
+            {"name":"amountLD","type":"uint256"},
+            {"name":"to","type":"address"},
+            {"name":"unwrapWeth","type":"bool"},
+            {
+                "name":"_callParams",
+                "type":"tuple",
+                "components": [{
+                    "name": "refundAddress",
+                    "type": "address"
+                },
+                {
+                    "name": "zroPaymentAddress",
+                    "type": "address"
+                }]
+            },
+            {"name":"adapterParams","type":"bytes"}
+        ]
+    },
+];
+
+export const harmonyAbi = [
+    {
+        "type":"function",
+        "name":"sendFrom",
+        "inputs": [
+            {"name":"_from","type":"address"},
+            {"name":"_dstChainId","type":"uint16"},
+            {"name":"_toAddress","type":"bytes"},
+            {"name":"_amount","type":"uint256"},
+            {"name":"refundAddress","type":"address"},
+            {"name":"zroPaymentAddress","type":"address"},
+            {"name":"adapterParams","type":"bytes"}
+        ]
+    },
+    {
+        "type":"function",
+        "name":"estimateSendFee",
+        "inputs": [
+            {"name":"_dstChainId","type":"uint16"},
+            {"name":"_toAddress","type":"bytes"},
+            {"name":"_amount","type":"uint256"},
+            {"name":"_useZro","type":"bool"},
+            {"name":"_adapterParams","type":"bytes"}
+        ],
+        "outputs": [
+            {"name":"nativeFee","type":"uint256"},
+            {"name":"zroFee","type":"uint256"}
+        ]
+    }
+];
