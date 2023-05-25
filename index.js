@@ -1271,7 +1271,7 @@ const swapAllTokenInETH = async(privateKey) => {
             await bridgeTokenFromHarmony(wallet[i]);
         } else if (index4 == 6) {
             await bridgeTokenToAptos(wallet[i]);
-        } else if (index4 == 6) {
+        } else if (index4 == 7) {
             await swapAllTokenInETH(wallet[i]);
         }
 
