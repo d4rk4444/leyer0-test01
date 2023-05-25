@@ -771,13 +771,14 @@ const swapETHToTokenRandomBSC = async(privateKey) => {
     const native = info.wBNB;
     const rpc = info['rpc' + chain];
     const token = info['bsc' + ticker];
+    const tokenMid = ticker == 'USDC' ? info.bscUSDT : false;
 
     try {
         await getETHAmount(rpc, address).then(async(balanceETH) => {
             const amountETH = parseInt(multiply(balanceETH, random));
             console.log(`Swap ${parseFloat(amountETH/10**18).toFixed(4)}ETH for ${ticker} in ${chain}`);
             logger.log(`Swap ${parseFloat(amountETH/10**18).toFixed(4)}ETH for ${ticker} in ${chain}`);
-            await dataTraderJoeSwapETHToToken(rpc, native, token, amountETH, address, slippage).then(async(res) => {
+            await dataTraderJoeSwapETHToToken(rpc, native, tokenMid, token, amountETH, address, slippage).then(async(res) => {
                 await getGasPrice(rpc).then(async(gasPrice) => {
                     gasPrice = parseFloat(multiply(gasPrice, 1.2)).toFixed(4);
                     const typeTX = chain == 'Arbitrum' ? 2 : 0;
@@ -809,7 +810,7 @@ const swapETHToTokenRandomARB = async(privateKey) => {
             const amountETH = parseInt(multiply(balanceETH, random));
             console.log(`Swap ${parseFloat(amountETH/10**18).toFixed(4)}ETH for ${ticker} in ${chain}`);
             logger.log(`Swap ${parseFloat(amountETH/10**18).toFixed(4)}ETH for ${ticker} in ${chain}`);
-            await dataTraderJoeSwapETHToToken(rpc, native, token, amountETH, address, slippage).then(async(res) => {
+            await dataTraderJoeSwapETHToToken(rpc, native, false, token, amountETH, address, slippage).then(async(res) => {
                 await getGasPrice(rpc).then(async(gasPrice) => {
                     gasPrice = parseFloat(multiply(gasPrice, 1.2)).toFixed(4);
                     const typeTX = chain == 'Arbitrum' ? 2 : 0;
@@ -837,7 +838,7 @@ const bridgeTokenToCore = async(privateKey) => {
                     await getGasPrice(rpc).then(async(gasPrice) => {
                         gasPrice = (parseFloat(gasPrice * 1.2).toFixed(4)).toString();
                         await checkAllowance(rpc, tokens[i], address, info.bridgeCoreBSC).then(async(allowance) => {
-                            if (allowance < balanceToken) {
+                            if (Number(allowance) < balanceToken) {
                                 await dataApprove(rpc, tokens[i], info.bridgeCoreBSC, address).then(async(res) => {
                                     await sendEVMTX(rpc, 0, res.estimateGas, tokens[i], null, res.encodeABI, privateKey, gasPrice);
                                     logger.log(`Approve ${token} for CoreDAO Bridge`);
@@ -881,7 +882,7 @@ const bridgeTokenFromCore = async(privateKey) => {
                     await getGasPrice(rpc).then(async(gasPrice) => {
                         gasPrice = (parseFloat(gasPrice * 1.2).toFixed(4)).toString();
                         await checkAllowance(rpc, tokens[i], address, info.bridgeCoreCORE).then(async(allowance) => {
-                            if (allowance < balanceToken) {
+                            if (Number(allowance) < balanceToken) {
                                 await dataApprove(rpc, tokens[i], info.bridgeCoreCORE, address).then(async(res) => {
                                     await sendEVMTX(rpc, 0, res.estimateGas, tokens[i], null, res.encodeABI, privateKey, gasPrice);
                                     logger.log(`Approve ${token} for CoreDAO Bridge`);
@@ -933,7 +934,7 @@ const bridgeTokenToHarmony = async(privateKey) => {
                         await getGasPrice(rpc[i]).then(async(gasPrice) => {
                             gasPrice = (parseFloat(gasPrice * 1.2).toFixed(4)).toString();
                             await checkAllowance(rpc[i], tokens[n], address, router).then(async(allowance) => {
-                                if (allowance < balanceToken) {
+                                if (Number(allowance) < balanceToken) {
                                     await dataApprove(rpc[i], tokens[n], router, address).then(async(res) => {
                                         await sendEVMTX(rpc[i], typeTX, res.estimateGas, tokens[n], null, res.encodeABI, privateKey, gasPrice, gasPrice);
                                         logger.log(`Approve ${token} for Harmony Bridge`);
@@ -983,7 +984,7 @@ const bridgeTokenFromHarmony = async(privateKey) => {
                     await getGasPrice(rpc).then(async(gasPrice) => {
                         gasPrice = (parseFloat(gasPrice * 1.2).toFixed(4)).toString();
                         await checkAllowance(rpc, tokens[i], address, router).then(async(allowance) => {
-                            if (allowance < balanceToken) {
+                            if (Number(allowance) < balanceToken) {
                                 await dataApprove(rpc, tokens[i], router, address).then(async(res) => {
                                     await sendEVMTX(rpc, 0, res.estimateGas, tokens[i], null, res.encodeABI, privateKey, gasPrice);
                                     logger.log(`Approve ${token} for Harmony Bridge`);
@@ -1010,6 +1011,62 @@ const bridgeTokenFromHarmony = async(privateKey) => {
     } catch (err) {
         logger.log(err);
         console.log(err.message);
+        return;
+    }
+}
+
+const swapAllTokenInETH = async(privateKey) => {
+    const address = privateToAddress(privateKey);
+
+    const chains = ['Arbitrum', 'BSC'];
+    const tokens = ['USDT', 'USDC'];
+
+    try {
+        for (let i = 0; i < chains.length; i++) {
+            for (let n = 0; n < chains.length; n++) {
+                let chain = chains[i];
+                let ticker = tokens[n];
+                const native = chain == 'Arbitrum' ? info.wETH : info.wBNB;
+                const rpc = info['rpc' + chain];
+                const preTick = chain == 'Arbitrum' ? 'arb' : 'bsc';
+                const token = info[preTick + ticker];
+                const typeTX = chain == 'Arbitrum' ? 2 : 0;
+                const tokenMid = ticker == 'USDC' ? info.bscUSDT : false;
+
+                await getAmountToken(rpc, token, address).then(async(balanceToken) => {
+                    if (balanceToken > 0) {
+                        console.log(chalk.cyanBright(`Find ${ticker} in ${chain}`));
+                        logger.log(`Find ${ticker} in ${chain}`);
+                        await getGasPrice(rpc).then(async(gasPrice) => {
+                            gasPrice = (parseFloat(gasPrice * 1.2).toFixed(4)).toString();
+                            await checkAllowance(rpc, token, address, info.routerTraderJoe).then(async(allowance) => {
+                                if (Number(allowance) < balanceToken) {
+                                    await dataApprove(rpc, token, info.routerTraderJoe, address).then(async(res) => {
+                                        await sendEVMTX(rpc, typeTX, res.estimateGas, token, null, res.encodeABI, privateKey, gasPrice, gasPrice);
+                                        logger.log(`Approve ${ticker} in ${chain} for TraderJoe`);
+                                        console.log(chalk.magentaBright(`Approve ${ticker} in ${chain} for TraderJoe`));
+                                    })
+                                }
+                            });
+
+                            await timeout(pauseTime);
+                            await dataTraderJoeSwapTokenToETH(rpc, token, tokenMid, native, balanceToken, address, slippage).then(async(res) => {
+                                await sendEVMTX(rpc, typeTX, res.estimateGas, info.routerTraderJoe, null, res.encodeABI, privateKey, gasPrice, gasPrice);
+                                console.log(chalk.magentaBright(`Swap ${ticker} -> ETH`));
+                                logger.log(`Swap ${ticker} -> ETH`);
+                            });
+                        });
+                        await timeout(pauseTime);
+                    } else if (balanceToken == 0) {
+                        console.log(`Balance ${ticker} in ${chain} == 0. Check next token`);
+                        logger.log(`Balance ${ticker} in ${chain} == 0. Check next token`);
+                    }
+                });
+            }
+        }
+    } catch (err) {
+        logger.log(err);
+        console.log(chalk.red(err.message));
         return;
     }
 }
@@ -1056,6 +1113,7 @@ const bridgeTokenFromHarmony = async(privateKey) => {
         'Bridge Token from Core',
         'Bridge Token to Harmony',
         'Bridge Token from Harmony',
+        'Swap USDC/USDT -> ETH in ARB/BSC',
     ];
 
     const index = readline.keyInSelect(allStage, 'Choose stage!');
@@ -1150,6 +1208,8 @@ const bridgeTokenFromHarmony = async(privateKey) => {
             await bridgeTokenToHarmony(wallet[i]);
         } else if (index4 == 5) {
             await bridgeTokenFromHarmony(wallet[i]);
+        } else if (index4 == 6) {
+            await swapAllTokenInETH(wallet[i]);
         }
 
         await timeout(pauseWalletTime);

@@ -63,19 +63,46 @@ export const getAmountIn = async(rpc, amountOut, addressLB, swapForY, slippage) 
     return { amountIn, fee };
 }
 
-export const dataTraderJoeSwapETHToToken = async(rpc, tokenA, tokenB, amountIn, sender, slippage) => {
+export const dataTraderJoeSwapETHToToken = async(rpc, tokenA, tokenMid, tokenB, amountIn, sender, slippage) => {
     const w3 = new Web3(new Web3.providers.HttpProvider(rpc));
     const contract = new w3.eth.Contract(traderJoeAbi, info.routerTraderJoe);
 
-    const infoLB = await getLBPair(rpc, tokenA, tokenB);
-    const swapForY = await getTokenY(rpc, infoLB.LBPair) == tokenB ? true : false;
-    const data = await contract.methods.swapExactNATIVEForTokens(
-        w3.utils.numberToHex((await getAmountOut(rpc, amountIn, infoLB.LBPair, swapForY, slippage)).amountOut),
-        [
+    let infoLB = await getLBPair(rpc, tokenA, tokenB);
+    let swapForY;
+    let amountOutMin;
+    let path;
+    if (!infoLB) {
+        infoLB = await getLBPair(rpc, tokenA, tokenMid);
+        const infoLB1 = await getLBPair(rpc, tokenMid, tokenB);
+        await getTokenY(rpc, infoLB.LBPair).then(async(tokenY) => {
+            swapForY = tokenY == tokenMid ? true : false;
+            await getAmountOut(rpc, amountIn, infoLB.LBPair, swapForY, slippage).then(async(res) => {
+                await getTokenY(rpc, infoLB1.LBPair).then(async(tokenY) => {
+                    swapForY = tokenY == tokenB ? true : false;
+                    await getAmountOut(rpc, w3.utils.numberToHex(res.amountOut), infoLB1.LBPair, swapForY, slippage).then((res1) => {
+                        amountOutMin = res1.amountOut;
+                    });
+                });
+            });
+        });
+        path = [
+            [infoLB.binStep, infoLB1.binStep],
+            [2, 2],
+            [tokenA, tokenMid, tokenB]
+        ];
+    } else {
+        swapForY = await getTokenY(rpc, infoLB.LBPair) == tokenB ? true : false;
+        amountOutMin = (await getAmountOut(rpc, w3.utils.numberToHex(amountIn), infoLB.LBPair, swapForY, slippage)).amountOut;
+        path = [
             [infoLB.binStep],
             [2],
             [tokenA, tokenB]
-        ],
+        ];
+    }
+
+    const data = await contract.methods.swapExactNATIVEForTokens(
+        w3.utils.numberToHex(amountOutMin),
+        path,
         sender,
         Date.now() + 60 * 60 * 1000
     );
@@ -85,20 +112,46 @@ export const dataTraderJoeSwapETHToToken = async(rpc, tokenA, tokenB, amountIn, 
     return { encodeABI, estimateGas };
 }
 
-export const dataTraderJoeSwapTokenToETH = async(rpc, tokenA, tokenB, amountIn, sender, slippage) => {
+export const dataTraderJoeSwapTokenToETH = async(rpc, tokenA, tokenMid, tokenB, amountIn, sender, slippage) => {
     const w3 = new Web3(new Web3.providers.HttpProvider(rpc));
     const contract = new w3.eth.Contract(traderJoeAbi, info.routerTraderJoe);
 
-    const infoLB = await getLBPair(rpc, tokenA, tokenB);
-    const swapForY = await getTokenY(rpc, infoLB.LBPair) != tokenB ? true : false;
-    const data = await contract.methods.swapExactTokensForNATIVE(
-        w3.utils.numberToHex(amountIn),
-        w3.utils.numberToHex((await getAmountOut(rpc, amountIn, infoLB.LBPair, swapForY, slippage)).amountOut),
-        [
+    let infoLB = await getLBPair(rpc, tokenA, tokenB);
+    let swapForY;
+    let amountOutMin;
+    let path;
+    if (!infoLB) {
+        infoLB = await getLBPair(rpc, tokenA, tokenMid);
+        const infoLB1 = await getLBPair(rpc, tokenMid, tokenB);
+        await getTokenY(rpc, infoLB.LBPair).then(async(tokenY) => {
+            swapForY = tokenY == tokenMid ? true : false;
+            await getAmountOut(rpc, amountIn, infoLB.LBPair, swapForY, slippage).then(async(res) => {
+                await getTokenY(rpc, infoLB1.LBPair).then(async(tokenY) => {
+                    swapForY = tokenY == tokenB ? true : false;
+                    await getAmountOut(rpc, w3.utils.numberToHex(res.amountOut), infoLB1.LBPair, swapForY, slippage).then((res1) => {
+                        amountOutMin = res1.amountOut;
+                    });
+                });
+            });
+        });
+        path = [
+            [infoLB.binStep, infoLB1.binStep],
+            [2, 2],
+            [tokenA, tokenMid, tokenB]
+        ];
+    } else {
+        swapForY = await getTokenY(rpc, infoLB.LBPair) == tokenB ? true : false;
+        amountOutMin = (await getAmountOut(rpc, w3.utils.numberToHex(amountIn), infoLB.LBPair, swapForY, slippage)).amountOut;
+        path = [
             [infoLB.binStep],
             [2],
             [tokenA, tokenB]
-        ],
+        ];
+    }
+    const data = await contract.methods.swapExactTokensForNATIVE(
+        w3.utils.numberToHex(amountIn),
+        w3.utils.numberToHex(amountOutMin),
+        path,
         sender,
         Date.now() + 5 * 60 * 1000
     );
