@@ -1,5 +1,6 @@
 import Web3 from 'web3';
 import fs from 'fs';
+import { AptosClient, AptosAccount, CoinClient } from 'aptos';
 
 export const info = {
     rpcETH: 'https://eth.llamarpc.com',
@@ -30,6 +31,7 @@ export const info = {
     arbUSDT: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
     bridgeHarmonyUSDCARB: '0x1c3979C2bb4f0e6dcb75Daf22ad0741Cf7D5F160',
     bridgeHarmonyUSDTARB: '0x297f0b9a452d34c9b1c15b36b173a9a0b0f0e10b',
+    bridgeAptosBSC: '0x2762409baa1804d94d8c0bcff8400b78bf915d5b',
     wBNB: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
     wETH: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
     chainIdArbitrum: '110',
@@ -92,4 +94,10 @@ export const parseFile = (file) => {
 export const privateToAddress = (privateKey) => {
     const w3 = new Web3();
     return w3.eth.accounts.privateKeyToAccount(privateKey).address;
+}
+
+export const privateToAptosAddress = (privateKey) => {
+    if (privateKey.startsWith('0x')) privateKey = privateKey.slice(2);
+    const mainAccount = new AptosAccount(Uint8Array.from(Buffer.from(privateKey, 'hex')));
+    return mainAccount.accountAddress.hexString;
 }

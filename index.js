@@ -3,7 +3,8 @@ import { info,
     shuffle,
     parseFile,
     generateRandomAmount,
-    privateToAddress } from './tools/other.js';
+    privateToAddress, 
+    privateToAptosAddress} from './tools/other.js';
 import { checkAllowance,
     getETHAmount,
     getAmountToken,
@@ -24,6 +25,7 @@ import * as dotenv from 'dotenv';
 import { mintHoloNFT } from './tools/NFT.js';
 import { dataBridgeCore, feeBridgeCore } from './tools/coredao.js';
 import { dataBridgeHarmony, feeBridgeHarmony, lzAdapterParamsHarmony } from './tools/harmony.js';
+import { dataBridgeTokenToAptos, feeBridgeAptos } from './tools/aptos.js';
 dotenv.config();
 
 const output = fs.createWriteStream(`history.log`, { flags: 'a' });
@@ -918,10 +920,12 @@ const bridgeTokenToHarmony = async(privateKey) => {
 
     try{
         const rpc = [info.rpcBSC, info.rpcArbitrum];
+        shuffle(rpc);
         const tokens = [info.bscUSDC, info.bscUSDT, info.arbUSDC, info.arbUSDT];
         for (let i = 0; i < rpc.length; i++) {
             let n = rpc[i] == info.rpcBSC ? 0 : 2;
             const length = rpc[i] == info.rpcBSC ? 2 : 4;
+            const chain = rpc[i] == info.rpcBSC ? 'BSC' : 'Arbitrum';
             for (n; n < length; n++) {
                 await getAmountToken(rpc[i], tokens[n], address).then(async(balanceToken) => {
                     const token = tokens[n] == info.bscUSDC || tokens[n] == info.arbUSDC ? 'USDC' : 'USDT';
@@ -936,19 +940,22 @@ const bridgeTokenToHarmony = async(privateKey) => {
                             await checkAllowance(rpc[i], tokens[n], address, router).then(async(allowance) => {
                                 if (Number(allowance) < balanceToken) {
                                     await dataApprove(rpc[i], tokens[n], router, address).then(async(res) => {
-                                        await sendEVMTX(rpc[i], typeTX, res.estimateGas, tokens[n], null, res.encodeABI, privateKey, gasPrice, gasPrice);
                                         logger.log(`Approve ${token} for Harmony Bridge`);
                                         console.log(chalk.magentaBright(`Approve ${token} for Harmony Bridge`));
+                                        await sendEVMTX(rpc[i], typeTX, res.estimateGas, tokens[n], null, res.encodeABI, privateKey, gasPrice, gasPrice);
                                     })
                                 }
                             });
 
                             await timeout(pauseTime);
-                            await feeBridgeHarmony(rpc[i], info.chainIdHarmony, balanceToken, router, 1, 300000, address).then(async(bridgeFee) => {
-                                await dataBridgeHarmony(rpc[i], balanceToken, info.chainIdHarmony, '0x', bridgeFee, router, address).then(async(res) => {
-                                    await sendEVMTX(rpc[i], typeTX, res.estimateGas, router, bridgeFee, res.encodeABI, privateKey, gasPrice, gasPrice);
-                                    logger.log(`Bridge All ${token} BSC -> Harmony`);
-                                    console.log(chalk.magentaBright(`Bridge All ${token} BSC -> Harmony`));
+                            await feeBridgeHarmony(rpc[i], info.chainIdHarmony, balanceToken, router, 1, 500000, address).then(async(bridgeFee) => {
+                                await lzAdapterParamsHarmony(1, 500000).then(async(adapterParams) => {
+                                    adapterParams = chain == 'BSC' ? adapterParams : '0x';
+                                    await dataBridgeHarmony(rpc[i], balanceToken, info.chainIdHarmony, adapterParams, bridgeFee, router, address).then(async(res) => {
+                                        logger.log(`Bridge All ${token} ${chain} -> Harmony`);
+                                        console.log(chalk.magentaBright(`Bridge All ${token} ${chain} -> Harmony`));
+                                        await sendEVMTX(rpc[i], typeTX, res.estimateGas, router, bridgeFee, res.encodeABI, privateKey, gasPrice, gasPrice);
+                                    });
                                 });
                             });
                         });
@@ -1007,6 +1014,59 @@ const bridgeTokenFromHarmony = async(privateKey) => {
                     console.log(chalk.yellow(`Check next token`));
                 }
             });
+        }
+    } catch (err) {
+        logger.log(err);
+        console.log(err.message);
+        return;
+    }
+}
+
+const bridgeTokenToAptos = async(privateKey) => {
+    const address = privateToAddress(privateKey);
+    const addressAPT = privateToAptosAddress(privateKey);
+
+    try{
+        const rpc = [info.rpcBSC];
+        shuffle(rpc);
+        const tokens = [info.bscUSDC, info.bscUSDT];
+        for (let i = 0; i < rpc.length; i++) {
+            let n = rpc[i] == info.rpcBSC ? 0 : 2;
+            const length = rpc[i] == info.rpcBSC ? 2 : 4;
+            const chain = rpc[i] == info.rpcBSC ? 'BSC' : 'Arbitrum';
+            for (n; n < length; n++) {
+                await getAmountToken(rpc[i], tokens[n], address).then(async(balanceToken) => {
+                    const token = tokens[n] == info.bscUSDC ? 'USDC' : 'USDT';
+                    if (balanceToken > 0) {
+                        await getGasPrice(rpc[i]).then(async(gasPrice) => {
+                            gasPrice = (parseFloat(gasPrice * 1.2).toFixed(4)).toString();
+                            await checkAllowance(rpc[i], tokens[n], address, info.bridgeAptosBSC).then(async(allowance) => {
+                                if (Number(allowance) < balanceToken) {
+                                    await dataApprove(rpc[i], tokens[n], info.bridgeAptosBSC, address).then(async(res) => {
+                                        await sendEVMTX(rpc[i], 0, res.estimateGas, tokens[n], null, res.encodeABI, privateKey, gasPrice);
+                                        logger.log(`Approve ${token} in ${chain} for Aptos Bridge`);
+                                        console.log(chalk.magentaBright(`Approve ${token} in ${chain} for Aptos Bridge`));
+                                    });
+                                }
+                            });
+
+                            await timeout(pauseTime);
+                            await feeBridgeAptos(rpc[i], info.bridgeAptosBSC, 2, 10000, 0, address).then(async(bridgeFee) => {
+                                await lzAdapterParamsToBytes(2, 10000, 0, addressAPT).then(async(adapterParams) => {
+                                    await dataBridgeTokenToAptos(rpc[i], info.bridgeAptosBSC, tokens[n], balanceToken, addressAPT, adapterParams, bridgeFee, address).then(async(res) => {   
+                                        await sendEVMTX(rpc[i], 0, res.estimateGas, info.bridgeAptosBSC, bridgeFee, res.encodeABI, privateKey, gasPrice);
+                                        logger.log(`Bridge All ${token} in ${chain} to Aptos`);
+                                        console.log(chalk.magentaBright(`Bridge All ${token} in ${chain} to Aptos`));
+                                    });
+                                });
+                            });
+                        });
+                    } else if (balanceToken == 0) {
+                        logger.log(`Balance ${token} in ${chain} = 0. Check next token.`);
+                        console.log(chalk.yellow(`Balance ${token} in ${chain} = 0. Check next token.`));
+                    }
+                });
+            }
         }
     } catch (err) {
         logger.log(err);
@@ -1113,6 +1173,7 @@ const swapAllTokenInETH = async(privateKey) => {
         'Bridge Token from Core',
         'Bridge Token to Harmony',
         'Bridge Token from Harmony',
+        'Bridge Token to Aptos',
         'Swap USDC/USDT -> ETH in ARB/BSC',
     ];
 
@@ -1208,6 +1269,8 @@ const swapAllTokenInETH = async(privateKey) => {
             await bridgeTokenToHarmony(wallet[i]);
         } else if (index4 == 5) {
             await bridgeTokenFromHarmony(wallet[i]);
+        } else if (index4 == 6) {
+            await bridgeTokenToAptos(wallet[i]);
         } else if (index4 == 6) {
             await swapAllTokenInETH(wallet[i]);
         }

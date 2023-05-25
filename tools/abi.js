@@ -47,7 +47,7 @@ export const abiToken = [
     }
   ]
 
-  export const traderJoeAbi = [
+export const traderJoeAbi = [
     {
         "type":"function",
         "name":"getAllLBPairs",
@@ -355,6 +355,54 @@ export const harmonyAbi = [
             {"name":"_amount","type":"uint256"},
             {"name":"_useZro","type":"bool"},
             {"name":"_adapterParams","type":"bytes"}
+        ],
+        "outputs": [
+            {"name":"nativeFee","type":"uint256"},
+            {"name":"zroFee","type":"uint256"}
+        ]
+    }
+];
+
+export const aptosAbi = [
+    {
+        "type":"function",
+        "name":"sendToAptos",
+        "inputs": [
+            {"name":"_token","type":"address"},
+            {"name":"_toAddress","type":"bytes32"},
+            {"name":"_amountLD","type":"uint256"},
+            {
+                "name":"_callParams",
+                "type":"tuple",
+                "components": [{
+                    "name": "refundAddress",
+                    "type": "address"
+                },
+                {
+                    "name": "zroPaymentAddress",
+                    "type": "address"
+                }]
+            },
+            {"name":"_adapterParams","type":"bytes"},
+        ]
+    },
+    {
+        "type":"function",
+        "name":"quoteForSend",
+        "inputs": [
+            {
+                "name":"_callParams",
+                "type":"tuple",
+                "components": [{
+                    "name": "refundAddress",
+                    "type": "address"
+                },
+                {
+                    "name": "zroPaymentAddress",
+                    "type": "address"
+                }]
+            },
+            {"name":"_adapterParams","type":"bytes"},
         ],
         "outputs": [
             {"name":"nativeFee","type":"uint256"},
