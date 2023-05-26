@@ -801,8 +801,8 @@ const swapETHToTokenRandomARB = async(privateKey) => {
 
     const chains = ['Arbitrum'];
     const tokens = ['USDT', 'USDC'];
-    const chain = chains[generateRandomAmount(0, chains.length - 1, 0)];
-    const ticker = tokens[generateRandomAmount(0, tokens.length - 1, 0)];
+    const chain = chains[0];
+    const ticker = tokens[generateRandomAmount(0, 1, 0)];
     const native = info.wETH;
     const rpc = info['rpc' + chain];
     const token = info['arb' + ticker];
@@ -1027,22 +1027,23 @@ const bridgeTokenToAptos = async(privateKey) => {
     const addressAPT = privateToAptosAddress(privateKey);
 
     try{
-        const rpc = [info.rpcBSC];
+        const rpc = [info.rpcBSC, info.rpcArbitrum];
         shuffle(rpc);
-        const tokens = [info.bscUSDC, info.bscUSDT];
+        const tokens = [info.bscUSDC, info.bscUSDT, info.arbUSDC];
         for (let i = 0; i < rpc.length; i++) {
             let n = rpc[i] == info.rpcBSC ? 0 : 2;
-            const length = rpc[i] == info.rpcBSC ? 2 : 4;
+            const length = rpc[i] == info.rpcBSC ? 2 : 3;
             const chain = rpc[i] == info.rpcBSC ? 'BSC' : 'Arbitrum';
+            const router = rpc[i] == info.rpcBSC ? info.bridgeAptosBSC : info.bridgeAptosARB;
             for (n; n < length; n++) {
                 await getAmountToken(rpc[i], tokens[n], address).then(async(balanceToken) => {
-                    const token = tokens[n] == info.bscUSDC ? 'USDC' : 'USDT';
+                    const token = tokens[n] == info.bscUSDC || tokens[n] == info.arbUSDC ? 'USDC' : 'USDT';
                     if (balanceToken > 0) {
                         await getGasPrice(rpc[i]).then(async(gasPrice) => {
                             gasPrice = (parseFloat(gasPrice * 1.2).toFixed(4)).toString();
-                            await checkAllowance(rpc[i], tokens[n], address, info.bridgeAptosBSC).then(async(allowance) => {
+                            await checkAllowance(rpc[i], tokens[n], address, router).then(async(allowance) => {
                                 if (Number(allowance) < balanceToken) {
-                                    await dataApprove(rpc[i], tokens[n], info.bridgeAptosBSC, address).then(async(res) => {
+                                    await dataApprove(rpc[i], tokens[n], router, address).then(async(res) => {
                                         await sendEVMTX(rpc[i], 0, res.estimateGas, tokens[n], null, res.encodeABI, privateKey, gasPrice);
                                         logger.log(`Approve ${token} in ${chain} for Aptos Bridge`);
                                         console.log(chalk.magentaBright(`Approve ${token} in ${chain} for Aptos Bridge`));
@@ -1051,10 +1052,10 @@ const bridgeTokenToAptos = async(privateKey) => {
                             });
 
                             await timeout(pauseTime);
-                            await feeBridgeAptos(rpc[i], info.bridgeAptosBSC, 2, 10000, 0, address).then(async(bridgeFee) => {
+                            await feeBridgeAptos(rpc[i], router, 2, 10000, 0, address).then(async(bridgeFee) => {
                                 await lzAdapterParamsToBytes(2, 10000, 0, addressAPT).then(async(adapterParams) => {
-                                    await dataBridgeTokenToAptos(rpc[i], info.bridgeAptosBSC, tokens[n], balanceToken, addressAPT, adapterParams, bridgeFee, address).then(async(res) => {   
-                                        await sendEVMTX(rpc[i], 0, res.estimateGas, info.bridgeAptosBSC, bridgeFee, res.encodeABI, privateKey, gasPrice);
+                                    await dataBridgeTokenToAptos(rpc[i], router, tokens[n], balanceToken, addressAPT, adapterParams, bridgeFee, address).then(async(res) => {   
+                                        await sendEVMTX(rpc[i], 0, res.estimateGas, router, bridgeFee, res.encodeABI, privateKey, gasPrice);
                                         logger.log(`Bridge All ${token} in ${chain} to Aptos`);
                                         console.log(chalk.magentaBright(`Bridge All ${token} in ${chain} to Aptos`));
                                     });
