@@ -1,8 +1,7 @@
 import Web3 from 'web3';
-import { ethers } from 'ethers';
 import { subtract, multiply, divide } from 'mathjs';
 import { info } from './other.js';
-import { abiToken, bridgeStargateAbi } from './abi.js';
+import { bridgeStargateAbi } from './abi.js';
 
 export const feeBridgeStargate = async(rpc, toChainId, routerAddress, gasAmountLZ, nativeForDstLZ, fromAddress) => {
     const w3 = new Web3(new Web3.providers.HttpProvider(rpc));

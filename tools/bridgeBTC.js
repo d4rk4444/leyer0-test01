@@ -1,7 +1,7 @@
 import Web3 from 'web3';
 import { ethers } from 'ethers';
 import { info } from './other.js';
-import { abiToken, bridgeBTCAbi } from './abi.js';
+import { bridgeBTCAbi } from './abi.js';
 
 export const lzAdapterParamsToBytes = async(version, gasAmount, nativeForDst, addressOnDst) => {
     const w3 = new Web3();

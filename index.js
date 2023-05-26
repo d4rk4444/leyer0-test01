@@ -13,7 +13,8 @@ import { checkAllowance,
     sendArbitrumTX,
     sendOptimismTX,
     sendEVMTX, 
-    getTokenBalanceAptos} from './tools/web3.js';
+    getTokenBalanceAptos,
+    getAPTBalance} from './tools/web3.js';
 import { dataTraderJoeSwapETHToToken, dataTraderJoeSwapTokenToETH  } from './tools/DEX.js';
 import { lzAdapterParamsToBytes, feeBridgeBTC, dataBridgeBTC } from './tools/bridgeBTC.js';
 import { feeBridgeStargate, dataBridgeETH } from './tools/bridgeETH.js';
@@ -397,7 +398,7 @@ const mainRandomBridge = async(privateKey) => {
                 if (balanceBTCb == 0) {
                     console.log(chalk.yellow(`Swap ${amountETH / 10**18}ETH -> BTCb`));
                     logger.log(`Swap ${amountETH / 10**18}ETH -> BTCb`);
-                    await dataTraderSwapETHToToken(info.rpcArbitrum, info.BTCb, info.WETHBTCBLPArbitrum, amountETH, address, slippage).then(async(res) => {
+                    await dataTraderJoeSwapETHToToken(info.rpcArbitrum, info.wETH, false, info.BTCb, amountETH, address, slippage).then(async(res) => {
                         await getGasPrice(info.rpcArbitrum).then(async(gasPrice) => {
                             await sendArbitrumTX(info.rpcArbitrum, res.estimateGas, gasPrice, gasPrice, info.routerTraderJoe, amountETH, res.encodeABI, privateKey);
                         });
@@ -643,7 +644,7 @@ const swapBTCBToETH = async(privateKey) => {
         //Swap BTCb -> ETH
         try {
             await getAmountToken(info.rpcArbitrum, info.BTCb, address).then(async(amountBTCb) => {
-                await dataTraderSwapTokenToETH(info.rpcArbitrum, info.BTCb, info.WETHBTCBLPArbitrum, amountBTCb, address, slippage).then(async(res) => {
+                await dataTraderJoeSwapTokenToETH(info.rpcArbitrum, info.BTCb, false, info.wETH, amountBTCb, address, slippage).then(async(res) => {
                     await getGasPrice(info.rpcArbitrum).then(async(gasPrice) => {
                         await sendArbitrumTX(info.rpcArbitrum, res.estimateGas, gasPrice, gasPrice, info.routerTraderJoe, null, res.encodeABI, privateKey);
                     });
@@ -1036,6 +1037,7 @@ const bridgeTokenToAptos = async(privateKey) => {
             const length = rpc[i] == info.rpcBSC ? 2 : 3;
             const chain = rpc[i] == info.rpcBSC ? 'BSC' : 'Arbitrum';
             const router = rpc[i] == info.rpcBSC ? info.bridgeAptosBSC : info.bridgeAptosARB;
+            const nativeDstAmount = await getAPTBalance(info.rpcAptos, addressAPT) < 0.51 * 10**8 ? generateRandomAmount(0.52 * 10**8, 0.54 * 10**8, 0) : 0;
             for (n; n < length; n++) {
                 await getAmountToken(rpc[i], tokens[n], address).then(async(balanceToken) => {
                     const token = tokens[n] == info.bscUSDC || tokens[n] == info.arbUSDC ? 'USDC' : 'USDT';
@@ -1053,8 +1055,8 @@ const bridgeTokenToAptos = async(privateKey) => {
                             });
 
                             await timeout(pauseTime);
-                            await feeBridgeAptos(rpc[i], router, 2, 10000, 0, address).then(async(bridgeFee) => {
-                                await lzAdapterParamsToBytes(2, 10000, 0, addressAPT).then(async(adapterParams) => {
+                            await feeBridgeAptos(rpc[i], router, 2, 10000, nativeDstAmount, address).then(async(bridgeFee) => {
+                                await lzAdapterParamsToBytes(2, 10000, nativeDstAmount, addressAPT).then(async(adapterParams) => {
                                     await dataBridgeTokenToAptos(rpc[i], router, tokens[n], balanceToken, addressAPT, adapterParams, bridgeFee, address).then(async(res) => {   
                                         await sendEVMTX(rpc[i], 0, res.estimateGas, router, bridgeFee, res.encodeABI, privateKey, gasPrice);
                                         logger.log(`Bridge All ${token} in ${chain} to Aptos`);

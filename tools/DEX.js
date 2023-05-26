@@ -1,8 +1,7 @@
 import Web3 from 'web3';
 import { info } from './other.js';
 import { traderJoeAbi, abiToken } from './abi.js';
-import { subtract, multiply, divide, composition, add, BigNumber, pow } from 'mathjs';
-
+import { subtract, multiply, divide, add } from 'mathjs';
 
 export const getLBPair = async(rpc, tokenA, tokenB) => {
     const w3 = new Web3(new Web3.providers.HttpProvider(rpc));

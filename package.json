@@ -1,6 +1,6 @@
 {
   "name": "leyer0-test01",
-  "version": "4.1.0",
+  "version": "4.2.0",
   "description": "",
   "main": "index.js",
   "type": "module",
@@ -16,9 +16,9 @@
     "console-stamp": "^3.1.1",
     "dotenv": "^16.0.3",
     "ethers": "5.7",
-    "fs": "^0.0.1-security",
     "mathjs": "^11.8.0",
     "readline-sync": "^1.4.10",
     "web3": "^1.9.0"
-  }
+  },
+  "keywords": []
 }
