@@ -12,7 +12,8 @@ import { checkAllowance,
     getGasPrice,
     sendArbitrumTX,
     sendOptimismTX,
-    sendEVMTX } from './tools/web3.js';
+    sendEVMTX, 
+    getTokenBalanceAptos} from './tools/web3.js';
 import { dataTraderJoeSwapETHToToken, dataTraderJoeSwapTokenToETH  } from './tools/DEX.js';
 import { lzAdapterParamsToBytes, feeBridgeBTC, dataBridgeBTC } from './tools/bridgeBTC.js';
 import { feeBridgeStargate, dataBridgeETH } from './tools/bridgeETH.js';
@@ -25,7 +26,7 @@ import * as dotenv from 'dotenv';
 import { mintHoloNFT } from './tools/NFT.js';
 import { dataBridgeCore, feeBridgeCore } from './tools/coredao.js';
 import { dataBridgeHarmony, feeBridgeHarmony, lzAdapterParamsHarmony } from './tools/harmony.js';
-import { dataBridgeTokenToAptos, feeBridgeAptos } from './tools/aptos.js';
+import { claimTokenBridgeAptos, dataBridgeTokenFromAptos, dataBridgeTokenToAptos, feeBridgeAptos } from './tools/aptos.js';
 dotenv.config();
 
 const output = fs.createWriteStream(`history.log`, { flags: 'a' });
@@ -1076,6 +1077,53 @@ const bridgeTokenToAptos = async(privateKey) => {
     }
 }
 
+const claimAllTokenAptos = async(ticker, privateKey) => {
+    const addressAPT = privateToAptosAddress(privateKey);
+    
+
+    try{
+        logger.log(`Aptos Wallet: ${addressAPT}`);
+        console.log(chalk.magentaBright(`Aptos Wallet: ${addressAPT}`));
+        await claimTokenBridgeAptos(info.rpcAptos, ticker, privateKey);
+    } catch (err) {
+        logger.log(err);
+        console.log(err.message);
+        return;
+    }
+}
+
+const bridgeTokenFromAptos = async(dstChainId, privateKey) => {
+    const address = privateToAddress(privateKey);
+    const addressAPT = privateToAptosAddress(privateKey);
+
+    try{
+        const tokens = ['USDC', 'USDT'];
+        logger.log(`Aptos Wallet: ${addressAPT}`);
+        console.log(chalk.blue(`Aptos Wallet: ${addressAPT}`));
+        for (let i = 0; i < tokens.length; i++) {
+            const token = tokens[i];
+            await getTokenBalanceAptos(info.rpcAptos, addressAPT, token).then(async(balanceToken) => {
+                if (balanceToken > 0) {
+                    logger.log(`Find ${token}`);
+                    console.log(chalk.yellow(`Find ${token}`));
+                    const feeBridge = dstChainId == info.chainIdBSC ? '8000000' : '50000000';
+                    const toChain = dstChainId == info.chainIdBSC ? 'BSC' : 'Arbitrum';
+                    await dataBridgeTokenFromAptos(info.rpcAptos, token, dstChainId, balanceToken, feeBridge, address, privateKey);
+                    logger.log(`Bridge ${token} to ${toChain}`);
+                    console.log(chalk.magentaBright(`Bridge ${token} to ${toChain}`));
+                } else if (balanceToken == 0) {
+                    logger.log(`Balance ${token} = 0. Check next`);
+                    console.log(chalk.yellow(`Balance ${token} = 0. Check next`));
+                }
+            });
+        }
+    } catch (err) {
+        logger.log(err);
+        console.log(err.message);
+        return;
+    }
+}
+
 const swapAllTokenInETH = async(privateKey) => {
     const address = privateToAddress(privateKey);
 
@@ -1175,7 +1223,11 @@ const swapAllTokenInETH = async(privateKey) => {
         'Bridge Token to Harmony',
         'Bridge Token from Harmony',
         'Bridge Token to Aptos',
-        'Swap USDC/USDT -> ETH in ARB/BSC',
+        'Claim USDC Aptos bridge',
+        'Claim USDT Aptos bridge',
+        'Bridge USDC/USDT from Aptos -> BSC',
+        'Bridge USDC/USDT from Aptos -> Arbitrum',
+        'Swap USDC/USDT -> ETH in Arbitrum/BSC',
     ];
 
     const index = readline.keyInSelect(allStage, 'Choose stage!');
@@ -1273,6 +1325,14 @@ const swapAllTokenInETH = async(privateKey) => {
         } else if (index4 == 6) {
             await bridgeTokenToAptos(wallet[i]);
         } else if (index4 == 7) {
+            await claimAllTokenAptos('USDC', wallet[i]);
+        } else if (index4 == 8) {
+            await claimAllTokenAptos('USDT', wallet[i]);
+        } else if (index4 == 9) {
+            await bridgeTokenFromAptos(info.chainIdBSC, wallet[i]);
+        } else if (index4 == 10) {
+            await bridgeTokenFromAptos(info.chainIdArbitrum, wallet[i]);
+        } else if (index4 == 11) {
             await swapAllTokenInETH(wallet[i]);
         }
 
