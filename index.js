@@ -1037,11 +1037,13 @@ const bridgeTokenToAptos = async(privateKey) => {
             const length = rpc[i] == info.rpcBSC ? 2 : 3;
             const chain = rpc[i] == info.rpcBSC ? 'BSC' : 'Arbitrum';
             const router = rpc[i] == info.rpcBSC ? info.bridgeAptosBSC : info.bridgeAptosARB;
-            const nativeDstAmount = await getAPTBalance(info.rpcAptos, addressAPT) < 0.51 * 10**8 ? generateRandomAmount(0.52 * 10**8, 0.54 * 10**8, 0) : 0;
+            let nativeDstAmount;
             for (n; n < length; n++) {
                 await getAmountToken(rpc[i], tokens[n], address).then(async(balanceToken) => {
                     const token = tokens[n] == info.bscUSDC || tokens[n] == info.arbUSDC ? 'USDC' : 'USDT';
                     if (balanceToken > 0) {
+                        try { await getAPTBalance(info.rpcAptos, addressAPT) < 0.51 * 10**8 ? generateRandomAmount(0.52 * 10**8, 0.54 * 10**8, 0) : 0; }
+                            catch (err) { nativeDstAmount = generateRandomAmount(0.52 * 10**8, 0.54 * 10**8, 0); }
                         await getGasPrice(rpc[i]).then(async(gasPrice) => {
                             gasPrice = (parseFloat(gasPrice * 1.2).toFixed(4)).toString();
                             await checkAllowance(rpc[i], tokens[n], address, router).then(async(allowance) => {
