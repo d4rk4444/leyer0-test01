@@ -786,7 +786,7 @@ const swapETHToTokenRandomBSC = async(privateKey) => {
                 await getGasPrice(rpc).then(async(gasPrice) => {
                     gasPrice = parseFloat(multiply(gasPrice, 1.2)).toFixed(4);
                     const typeTX = chain == 'Arbitrum' ? 2 : 0;
-                    await sendEVMTX(rpc, typeTX, res.estimateGas, info.routerTraderJoe, amountETH, res.encodeABI, privateKey, gasPrice, gasPrice);
+                    await sendEVMTX(rpc, typeTX, parseInt(res.estimateGas * 1.5), info.routerTraderJoe, amountETH, res.encodeABI, privateKey, gasPrice, gasPrice);
                 });
             });
         });
@@ -818,7 +818,7 @@ const swapETHToTokenRandomARB = async(privateKey) => {
                 await getGasPrice(rpc).then(async(gasPrice) => {
                     gasPrice = parseFloat(multiply(gasPrice, 1.2)).toFixed(4);
                     const typeTX = chain == 'Arbitrum' ? 2 : 0;
-                    await sendEVMTX(rpc, typeTX, res.estimateGas, info.routerTraderJoe, amountETH, res.encodeABI, privateKey, gasPrice, gasPrice);
+                    await sendEVMTX(rpc, typeTX, parseInt(res.estimateGas * 1.5), info.routerTraderJoe, amountETH, res.encodeABI, privateKey, gasPrice, gasPrice);
                 });
             });
         });
