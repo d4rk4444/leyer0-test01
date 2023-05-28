@@ -1024,55 +1024,61 @@ const bridgeTokenFromHarmony = async(privateKey) => {
     }
 }
 
-const bridgeTokenToAptos = async(privateKey) => {
+const bridgeTokenToAptos = async(rpc, privateKey) => {
     const address = privateToAddress(privateKey);
     const addressAPT = privateToAptosAddress(privateKey);
 
     try{
-        const rpc = [info.rpcBSC, info.rpcArbitrum];
-        shuffle(rpc);
         const tokens = [info.bscUSDC, info.bscUSDT, info.arbUSDC];
-        for (let i = 0; i < rpc.length; i++) {
-            let n = rpc[i] == info.rpcBSC ? 0 : 2;
-            const length = rpc[i] == info.rpcBSC ? 2 : 3;
-            const chain = rpc[i] == info.rpcBSC ? 'BSC' : 'Arbitrum';
-            const router = rpc[i] == info.rpcBSC ? info.bridgeAptosBSC : info.bridgeAptosARB;
-            let nativeDstAmount;
-            for (n; n < length; n++) {
-                await getAmountToken(rpc[i], tokens[n], address).then(async(balanceToken) => {
-                    const token = tokens[n] == info.bscUSDC || tokens[n] == info.arbUSDC ? 'USDC' : 'USDT';
-                    if (balanceToken > 0) {
-                        try { await getAPTBalance(info.rpcAptos, addressAPT) < 0.51 * 10**8 ? generateRandomAmount(0.52 * 10**8, 0.54 * 10**8, 0) : 0; }
-                            catch (err) { nativeDstAmount = generateRandomAmount(0.52 * 10**8, 0.54 * 10**8, 0); }
-                        await getGasPrice(rpc[i]).then(async(gasPrice) => {
-                            gasPrice = (parseFloat(gasPrice * 1.2).toFixed(4)).toString();
-                            await checkAllowance(rpc[i], tokens[n], address, router).then(async(allowance) => {
-                                if (Number(allowance) < balanceToken) {
-                                    await dataApprove(rpc[i], tokens[n], router, address).then(async(res) => {
-                                        await sendEVMTX(rpc[i], 0, res.estimateGas, tokens[n], null, res.encodeABI, privateKey, gasPrice);
-                                        logger.log(`Approve ${token} in ${chain} for Aptos Bridge`);
-                                        console.log(chalk.magentaBright(`Approve ${token} in ${chain} for Aptos Bridge`));
-                                    });
-                                }
-                            });
+        let n = rpc == info.rpcBSC ? 0 : 2;
+        const length = rpc == info.rpcBSC ? 2 : 3;
+        const chain = rpc == info.rpcBSC ? 'BSC' : 'Arbitrum';
+        const router = rpc == info.rpcBSC ? info.bridgeAptosBSC : info.bridgeAptosARB;
+        let nativeDstAmount;
+        for (n; n < length; n++) {
+            await getAmountToken(rpc, tokens[n], address).then(async(balanceToken) => {
+                const token = tokens[n] == info.bscUSDC || tokens[n] == info.arbUSDC ? 'USDC' : 'USDT';
+                if (balanceToken > 0) {
+                    try {
+                        nativeDstAmount = rpc == info.rpcBSC && await getAPTBalance(info.rpcAptos, addressAPT) < 0.09 * 10**8
+                            ? generateRandomAmount(0.09 * 10**8, 0.1 * 10**8, 0)
+                            : rpc == info.rpcArbitrum && await getAPTBalance(info.rpcAptos, addressAPT) < 0.51 * 10**8 ? generateRandomAmount(0.51 * 10**8, 0.54 * 10**8, 0)
+                            : 0;
+                        console.log(nativeDstAmount);
+                    } catch (err) {
+                        nativeDstAmount = rpc == info.rpcBSC
+                            ? generateRandomAmount(0.09 * 10**8, 0.1 * 10**8, 0)
+                            : generateRandomAmount(0.52 * 10**8, 0.54 * 10**8, 0);
+                        console.log(nativeDstAmount);
+                    }
+                    await getGasPrice(rpc).then(async(gasPrice) => {
+                        gasPrice = (parseFloat(gasPrice * 1.2).toFixed(4)).toString();
+                        await checkAllowance(rpc, tokens[n], address, router).then(async(allowance) => {
+                            if (Number(allowance) < balanceToken) {
+                                await dataApprove(rpc, tokens[n], router, address).then(async(res) => {
+                                    await sendEVMTX(rpc, 0, res.estimateGas, tokens[n], null, res.encodeABI, privateKey, gasPrice);
+                                    logger.log(`Approve ${token} in ${chain} for Aptos Bridge`);
+                                    console.log(chalk.magentaBright(`Approve ${token} in ${chain} for Aptos Bridge`));
+                                });
+                            }
+                        });
 
-                            await timeout(pauseTime);
-                            await feeBridgeAptos(rpc[i], router, 2, 10000, nativeDstAmount, address).then(async(bridgeFee) => {
-                                await lzAdapterParamsToBytes(2, 10000, nativeDstAmount, addressAPT).then(async(adapterParams) => {
-                                    await dataBridgeTokenToAptos(rpc[i], router, tokens[n], balanceToken, addressAPT, adapterParams, bridgeFee, address).then(async(res) => {   
-                                        await sendEVMTX(rpc[i], 0, res.estimateGas, router, bridgeFee, res.encodeABI, privateKey, gasPrice);
-                                        logger.log(`Bridge All ${token} in ${chain} to Aptos`);
-                                        console.log(chalk.magentaBright(`Bridge All ${token} in ${chain} to Aptos`));
-                                    });
+                        await timeout(pauseTime);
+                        await feeBridgeAptos(rpc, router, 2, 10000, nativeDstAmount, address).then(async(bridgeFee) => {
+                            await lzAdapterParamsToBytes(2, 10000, nativeDstAmount, addressAPT).then(async(adapterParams) => {
+                                await dataBridgeTokenToAptos(rpc, router, tokens[n], balanceToken, addressAPT, adapterParams, bridgeFee, address).then(async(res) => {   
+                                    await sendEVMTX(rpc, 0, res.estimateGas, router, bridgeFee, res.encodeABI, privateKey, gasPrice);
+                                    logger.log(`Bridge All ${token} in ${chain} to Aptos`);
+                                    console.log(chalk.magentaBright(`Bridge All ${token} in ${chain} to Aptos`));
                                 });
                             });
                         });
-                    } else if (balanceToken == 0) {
-                        logger.log(`Balance ${token} in ${chain} = 0. Check next token.`);
-                        console.log(chalk.yellow(`Balance ${token} in ${chain} = 0. Check next token.`));
-                    }
-                });
-            }
+                    });
+                } else if (balanceToken == 0) {
+                    logger.log(`Balance ${token} in ${chain} = 0. Check next token.`);
+                    console.log(chalk.yellow(`Balance ${token} in ${chain} = 0. Check next token.`));
+                }
+            });
         }
     } catch (err) {
         logger.log(err);
@@ -1226,7 +1232,8 @@ const swapAllTokenInETH = async(privateKey) => {
         'Bridge Token from Core',
         'Bridge Token to Harmony',
         'Bridge Token from Harmony',
-        'Bridge Token to Aptos',
+        'Bridge Token from BSC -> Aptos',
+        'Bridge Token from Arbitrum -> Aptos',
         'Claim USDC Aptos bridge',
         'Claim USDT Aptos bridge',
         'Bridge USDC/USDT from Aptos -> BSC',
@@ -1327,16 +1334,18 @@ const swapAllTokenInETH = async(privateKey) => {
         } else if (index4 == 5) {
             await bridgeTokenFromHarmony(wallet[i]);
         } else if (index4 == 6) {
-            await bridgeTokenToAptos(wallet[i]);
+            await bridgeTokenToAptos(info.rpcBSC, wallet[i]);
         } else if (index4 == 7) {
-            await claimAllTokenAptos('USDC', wallet[i]);
+            await bridgeTokenToAptos(info.rpcArbitrum, wallet[i]);
         } else if (index4 == 8) {
-            await claimAllTokenAptos('USDT', wallet[i]);
+            await claimAllTokenAptos('USDC', wallet[i]);
         } else if (index4 == 9) {
-            await bridgeTokenFromAptos(info.chainIdBSC, wallet[i]);
+            await claimAllTokenAptos('USDT', wallet[i]);
         } else if (index4 == 10) {
-            await bridgeTokenFromAptos(info.chainIdArbitrum, wallet[i]);
+            await bridgeTokenFromAptos(info.chainIdBSC, wallet[i]);
         } else if (index4 == 11) {
+            await bridgeTokenFromAptos(info.chainIdArbitrum, wallet[i]);
+        } else if (index4 == 12) {
             await swapAllTokenInETH(wallet[i]);
         }
 
