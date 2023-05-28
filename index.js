@@ -1163,7 +1163,7 @@ const swapAllTokenInETH = async(privateKey) => {
                             await checkAllowance(rpc, token, address, info.routerTraderJoe).then(async(allowance) => {
                                 if (Number(allowance) < balanceToken) {
                                     await dataApprove(rpc, token, info.routerTraderJoe, address).then(async(res) => {
-                                        await sendEVMTX(rpc, typeTX, res.estimateGas, token, null, res.encodeABI, privateKey, gasPrice, gasPrice);
+                                        await sendEVMTX(rpc, typeTX, parseInt(res.estimateGas * 1.5), token, null, res.encodeABI, privateKey, gasPrice, gasPrice);
                                         logger.log(`Approve ${ticker} in ${chain} for TraderJoe`);
                                         console.log(chalk.magentaBright(`Approve ${ticker} in ${chain} for TraderJoe`));
                                     })
@@ -1172,7 +1172,7 @@ const swapAllTokenInETH = async(privateKey) => {
 
                             await timeout(pauseTime);
                             await dataTraderJoeSwapTokenToETH(rpc, token, tokenMid, native, balanceToken, address, slippage).then(async(res) => {
-                                await sendEVMTX(rpc, typeTX, res.estimateGas, info.routerTraderJoe, null, res.encodeABI, privateKey, gasPrice, gasPrice);
+                                await sendEVMTX(rpc, typeTX, parseInt(res.estimateGas * 1.5), info.routerTraderJoe, null, res.encodeABI, privateKey, gasPrice, gasPrice);
                                 console.log(chalk.magentaBright(`Swap ${ticker} -> ETH`));
                                 logger.log(`Swap ${ticker} -> ETH`);
                             });
