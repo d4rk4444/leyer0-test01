@@ -1107,25 +1107,27 @@ const bridgeTokenFromAptos = async(dstChainId, privateKey) => {
     const addressAPT = privateToAptosAddress(privateKey);
 
     try{
-        const tokens = ['USDC', 'USDT'];
+        const tokens = dstChainId == info.chainIdBSC ? ['USDC', 'USDT'] : ['USDC'];
         logger.log(`Aptos Wallet: ${addressAPT}`);
         console.log(chalk.blue(`Aptos Wallet: ${addressAPT}`));
         for (let i = 0; i < tokens.length; i++) {
             const token = tokens[i];
-            await getTokenBalanceAptos(info.rpcAptos, addressAPT, token).then(async(balanceToken) => {
-                if (balanceToken > 0) {
-                    logger.log(`Find ${token}`);
-                    console.log(chalk.yellow(`Find ${token}`));
-                    const feeBridge = dstChainId == info.chainIdBSC ? '8000000' : '50000000';
-                    const toChain = dstChainId == info.chainIdBSC ? 'BSC' : 'Arbitrum';
-                    await dataBridgeTokenFromAptos(info.rpcAptos, token, dstChainId, balanceToken, feeBridge, address, privateKey);
-                    logger.log(`Bridge ${token} to ${toChain}`);
-                    console.log(chalk.magentaBright(`Bridge ${token} to ${toChain}`));
-                } else if (balanceToken == 0) {
-                    logger.log(`Balance ${token} = 0. Check next`);
-                    console.log(chalk.yellow(`Balance ${token} = 0. Check next`));
-                }
-            });
+            let balanceToken;
+            try {
+                balanceToken = await getTokenBalanceAptos(info.rpcAptos, addressAPT, token);
+            } catch { balanceToken = 0; }
+            if (balanceToken > 0) {
+                logger.log(`Find ${token}`);
+                console.log(chalk.yellow(`Find ${token}`));
+                const feeBridge = dstChainId == info.chainIdBSC ? '8000000' : '50000000';
+                const toChain = dstChainId == info.chainIdBSC ? 'BSC' : 'Arbitrum';
+                await dataBridgeTokenFromAptos(info.rpcAptos, token, dstChainId, balanceToken, feeBridge, address, privateKey);
+                logger.log(`Bridge ${token} to ${toChain}`);
+                console.log(chalk.magentaBright(`Bridge ${token} to ${toChain}`));
+            } else if (balanceToken == 0) {
+                logger.log(`Balance ${token} = 0. Check next`);
+                console.log(chalk.yellow(`Balance ${token} = 0. Check next`));
+            }
         }
     } catch (err) {
         logger.log(err);
