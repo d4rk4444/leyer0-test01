@@ -767,30 +767,60 @@ const bridgeAllETHToArbitrum = async(privateKey) => {
 const waitforToken = async(rpc, token, privateKey) => {
     const address = privateToAddress(privateKey);
 
-    let status;
-    while(!status) {
-        await getAmountToken(rpc, token, address).then(async(balance) => {
-            if (balance == 0) {
-                console.log('Wait for Token. Update every 2 min');
-                logger.log('Wait for Token. Update every 2 min');
-                await timeout(120000);
-            } else if (balance > 0) {
-                console.log(chalk.magentaBright('Find token!'));
-                logger.log('Find token!');
-                status = true;
-            }
-        });
+    try {
+        let status;
+        while(!status) {
+            await getAmountToken(rpc, token, address).then(async(balance) => {
+                if (balance == 0) {
+                    console.log('Wait for Token. Update every 2 min');
+                    logger.log('Wait for Token. Update every 2 min');
+                    await timeout(120000);
+                } else if (balance > 0) {
+                    console.log(chalk.magentaBright('Find token!'));
+                    logger.log('Find token!');
+                    status = true;
+                }
+            });
+        }
+    } catch (err) {
+        logger.log(err);
+        console.log(chalk.red(err.message));
+        return;
     }
 }
 
 const findToken = async(rpc, arrToken, privateKey) => {
     const address = privateToAddress(privateKey);
 
-    for (let i = 0; i < arrToken.length; i++) {
-        const balance = await getAmountToken(rpc, arrToken[i], address);
-        if (balance > 0) {
-            return arrToken[i];
+    try {
+        for (let i = 0; i < arrToken.length; i++) {
+            const balance = await getAmountToken(rpc, arrToken[i], address);
+            if (balance > 0) {
+                return arrToken[i];
+            }
         }
+    } catch (err) {
+        logger.log(err);
+        console.log(chalk.red(err.message));
+        return;
+    }
+}
+
+const sendOtherBSC = async(token, privateKey) => {
+    const address = privateToAddress(privateKey);
+
+    try {
+        await getAmountToken(info.rpcBSC, token, address).then(async(balance) => {
+            console.log(balance);
+            const intNumber = balance.substr(balance.length - 13);
+            console.log(intNumber)
+            //console.log(chalk.magentaBright('Find token!'));
+            //logger.log('Find token!');
+        });
+    } catch (err) {
+        logger.log(err);
+        console.log(chalk.red(err.message));
+        return;
     }
 }
 
@@ -809,9 +839,9 @@ const swapETHToTokenRandomBSC = async(privateKey) => {
 
     try {
         await getETHAmount(rpc, address).then(async(balanceETH) => {
-            const amountETH = parseInt(multiply(balanceETH, random));
-            console.log(`Swap ${parseFloat(amountETH/10**18).toFixed(4)}ETH for ${ticker} in ${chain}`);
-            logger.log(`Swap ${parseFloat(amountETH/10**18).toFixed(4)}ETH for ${ticker} in ${chain}`);
+            const amountETH = parseInt(multiply(balanceETH, random)/10**13)*10**13;
+            console.log(`Swap ${parseFloat(amountETH/10**18).toFixed(4)}BNB for ${ticker} in ${chain}`);
+            logger.log(`Swap ${parseFloat(amountETH/10**18).toFixed(4)}BNB for ${ticker} in ${chain}`);
             await dataTraderJoeSwapETHToToken(rpc, native, tokenMid, token, amountETH, address, slippage).then(async(res) => {
                 await getGasPrice(rpc).then(async(gasPrice) => {
                     gasPrice = parseFloat(multiply(gasPrice, 1.2)).toFixed(4);
@@ -1262,6 +1292,39 @@ const mainFunc = async(chain, privateKey) => {
     await swapAllTokenInETH(privateKey);
 }
 
+const firstFunc = async(privateKey) => {
+    const rpc = info.rpcBSC;
+    await swapETHToTokenRandomBSC(privateKey);
+    await timeout(pauseTime);
+    let token = await findToken(rpc, [info.bscUSDC, info.bscUSDT], privateKey);
+
+    await bridgeTokenToCore([token], privateKey);
+    await timeout(pauseTime);
+
+    token = token == info.bscUSDT ? info.coreUSDT : info.coreUSDC;
+    await waitforToken(info.rpcCore, token, privateKey);
+    await bridgeTokenFromCore(privateKey);
+}
+
+const secondFunc = async(privateKey) => {
+    const rpc = info.rpcBSC;
+    let token = await findToken(rpc, [info.bscUSDC, info.bscUSDT], privateKey);
+
+    await bridgeTokenToHarmony([rpc], [token], privateKey);
+    await timeout(pauseTime);
+
+    token = token == info.bscUSDC ? info.oneBSCUSDC : info.oneBSCUSDT;
+    await waitforToken(info.rpcHarmony, token, privateKey);
+    await timeout(pauseTime);
+
+    token = token == info.oneBSCUSDC ? info.bscUSDC : info.bscUSDT;
+    await bridgeTokenFromHarmony(privateKey);
+    await waitforToken(chainHarm, token, privateKey);
+    await timeout(pauseTime);
+
+    await swapAllTokenInETH(privateKey);
+}
+
 
 //============================================================
 
@@ -1313,7 +1376,9 @@ const mainFunc = async(chain, privateKey) => {
         'Bridge USDC/USDT from Aptos -> Arbitrum',
         'Swap USDC/USDT -> ETH in Arbitrum/BSC',
         'Cycle BSC Swap/Core/Harmony/Swap',
-        'Cycle Arbitrum Swap/Harmony/Swap'
+        'Cycle Arbitrum Swap/Harmony/Swap',
+        'FIRST Func swap/core/bsc',
+        'SECOND Func harmony/bsc/swap',
     ];
 
     const index = readline.keyInSelect(allStage, 'Choose stage!');
