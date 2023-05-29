@@ -1498,7 +1498,11 @@ const secondFunc = async(privateKey) => {
             await mainFunc('BSC', wallet[i]);
         } else if (index4 == 15) {
             await mainFunc('Arbitrum', wallet[i]);
-        }
+        } else if (index4 == 16) {
+            await firstFunc(wallet[i]);
+        } else if (index4 == 17) {
+            await secondFunc(wallet[i]);
+        } 
 
         await timeout(pauseWalletTime);
     }
