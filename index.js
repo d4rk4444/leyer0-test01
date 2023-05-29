@@ -1392,9 +1392,8 @@ const mainFunc = async(chain, privateKey) => {
         } else if (index4 == 1) {
             await swapETHToTokenRandomARB(wallet[i]);
         } else if (index4 == 2) {
-            const arrTokens = [info.bscUSDT, info.bscUSDC];
-            let token = arrTokens[generateRandomAmount(0, 1, 0)];
-            await bridgeTokenToCore(token, wallet[i]);
+            const arrToken = [info.bscUSDT, info.bscUSDC];
+            await bridgeTokenToCore(arrToken, wallet[i]);
         } else if (index4 == 3) {
             await bridgeTokenFromCore(wallet[i]);
         } else if (index4 == 4) {
