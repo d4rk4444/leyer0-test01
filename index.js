@@ -1293,7 +1293,8 @@ const mainFunc = async(chain, privateKey) => {
         'Random Swap USDT/USDC Arbitrum',
         'Bridge Token to Core',
         'Bridge Token from Core',
-        'Bridge Token to Harmony',
+        'Bridge Token BSC -> Harmony',
+        'Bridge Token Arbitrum -> Harmony',
         'Bridge Token from Harmony',
         'Bridge Token from BSC -> Aptos',
         'Bridge Token from Arbitrum -> Aptos',
@@ -1397,30 +1398,32 @@ const mainFunc = async(chain, privateKey) => {
         } else if (index4 == 3) {
             await bridgeTokenFromCore(wallet[i]);
         } else if (index4 == 4) {
-            const arrChains = [info.rpcArbitrum, info.rpcBSC];
-            const chain = arrChains[generateRandomAmount(0, 1, 0)]
-            const arrTokensHarm = chain == info.rpcBSC ? [info.bscUSDC, info.bscUSDT] : [info.arbUSDC, info.arbUSDT];
-            const token = arrTokensHarm[generateRandomAmount(0, 1, 0)];
-            await bridgeTokenToHarmony([chain], [token], wallet[i]);
+            const arrChains = [info.rpcBSC];
+            const arrToken = [info.bscUSDC, info.bscUSDT];
+            await bridgeTokenToHarmony(arrChains, arrToken, wallet[i]);
         } else if (index4 == 5) {
-            await bridgeTokenFromHarmony(wallet[i]);
+            const arrChains = [info.rpcArbitrum];
+            const arrToken = [info.arbUSDC, info.arbUSDT];
+            await bridgeTokenToHarmony(arrChains, arrToken, wallet[i]);
         } else if (index4 == 6) {
-            await bridgeTokenToAptos(info.rpcBSC, wallet[i]);
+            await bridgeTokenFromHarmony(wallet[i]);
         } else if (index4 == 7) {
-            await bridgeTokenToAptos(info.rpcArbitrum, wallet[i]);
+            await bridgeTokenToAptos(info.rpcBSC, wallet[i]);
         } else if (index4 == 8) {
-            await claimAllTokenAptos('USDC', wallet[i]);
+            await bridgeTokenToAptos(info.rpcArbitrum, wallet[i]);
         } else if (index4 == 9) {
-            await claimAllTokenAptos('USDT', wallet[i]);
+            await claimAllTokenAptos('USDC', wallet[i]);
         } else if (index4 == 10) {
-            await bridgeTokenFromAptos(info.chainIdBSC, wallet[i]);
+            await claimAllTokenAptos('USDT', wallet[i]);
         } else if (index4 == 11) {
-            await bridgeTokenFromAptos(info.chainIdArbitrum, wallet[i]);
+            await bridgeTokenFromAptos(info.chainIdBSC, wallet[i]);
         } else if (index4 == 12) {
-            await swapAllTokenInETH(wallet[i]);
+            await bridgeTokenFromAptos(info.chainIdArbitrum, wallet[i]);
         } else if (index4 == 13) {
-            await mainFunc('BSC', wallet[i]);
+            await swapAllTokenInETH(wallet[i]);
         } else if (index4 == 14) {
+            await mainFunc('BSC', wallet[i]);
+        } else if (index4 == 15) {
             await mainFunc('Arbitrum', wallet[i]);
         }
 
