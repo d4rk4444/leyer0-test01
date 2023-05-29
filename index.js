@@ -764,6 +764,25 @@ const bridgeAllETHToArbitrum = async(privateKey) => {
 
 //============================================================
 
+const waitforToken = async(rpc, token, privateKey) => {
+    const address = privateToAddress(privateKey);
+
+    let status;
+    while(!status) {
+        await getAmountToken(rpc, token, address).then(async(balance) => {
+            if (balance == 0) {
+                console.log('Wait for Token. Update every 2 min');
+                logger.log('Wait for Token. Update every 2 min');
+                await timeout(120000);
+            } else if (balance > 0) {
+                console.log(chalk.magentaBright('Find token!'));
+                logger.log('Find token!');
+                status = true;
+            }
+        });
+    }
+}
+
 const swapETHToTokenRandomBSC = async(privateKey) => {
     const address = privateToAddress(privateKey);
     const random = generateRandomAmount(process.env.PERCENT_BRIDGE_MIN / 100, process.env.PERCENT_BRIDGE_MAX / 100, 3);
@@ -829,12 +848,12 @@ const swapETHToTokenRandomARB = async(privateKey) => {
     }
 }
 
-const bridgeTokenToCore = async(privateKey) => {
+const bridgeTokenToCore = async(token, privateKey) => {
     const address = privateToAddress(privateKey);
 
     try{
         const rpc = info.rpcBSC;
-        const tokens = [info.bscUSDT, info.bscUSDC];
+        const tokens = [token];
         for (let i = 0; i < tokens.length; i++) {
             await getAmountToken(rpc, tokens[i], address).then(async(balanceToken) => {
                 const token = tokens[i] == info.bscUSDC ? 'USDC' : 'USDT';
@@ -917,13 +936,12 @@ const bridgeTokenFromCore = async(privateKey) => {
     }
 }
 
-const bridgeTokenToHarmony = async(privateKey) => {
+const bridgeTokenToHarmony = async(rpc, token, privateKey) => {
     const address = privateToAddress(privateKey);
 
     try{
-        const rpc = [info.rpcBSC, info.rpcArbitrum];
-        shuffle(rpc);
-        const tokens = [info.bscUSDC, info.bscUSDT, info.arbUSDC, info.arbUSDT];
+        rpc = [rpc];
+        const tokens = [token];
         for (let i = 0; i < rpc.length; i++) {
             let n = rpc[i] == info.rpcBSC ? 0 : 2;
             const length = rpc[i] == info.rpcBSC ? 2 : 4;
@@ -1192,6 +1210,50 @@ const swapAllTokenInETH = async(privateKey) => {
     }
 }
 
+const mainFunc = async(chain, privateKey) => {
+    const firstFunc = chain == 'BSC' ? swapETHToTokenRandomBSC : swapETHToTokenRandomARB;
+    await firstFunc(privateKey);
+
+    if (chain == 'BSC') {
+        const arrTokens = [info.bscUSDT, info.bscUSDC];
+        let token = arrTokens[generateRandomAmount(0, 1, 0)];
+        await bridgeTokenToCore(token, privateKey);
+
+        await timeout(pauseTime);
+        token = token == info.bscUSDT ? info.coreUSDT : info.coreUSDC;
+        await waitforToken(info.rpcCore, token, privateKey);
+        await bridgeTokenFromCore(privateKey);
+
+        await timeout(pauseTime);
+        token = token == info.coreUSDT ? info.bscUSDT : info.bscUSDC;
+        await waitforToken(info.rpcBSC, token, privateKey);
+    }
+
+    const chainHarm = info['rpc' + chain];
+    const arrTokensHarm = chainHarm == info.rpcBSC ? [info.bscUSDC, info.bscUSDT] : [info.arbUSDC, info.arbUSDT];
+    let token = arrTokensHarm[generateRandomAmount(0, 1, 0)];
+
+    await bridgeTokenToHarmony(chainHarm, token, privateKey);
+    await timeout(pauseTime);
+
+    token = token == info.bscUSDC ? info.oneBSCUSDC
+        : token == info.bscUSDT ? info.oneBSCUSDT
+        : token == info.arbUSDC ? info.oneARBUSDC
+        : info.oneARBUSDT;
+    await waitforToken(info.rpcHarmony, token, privateKey);
+    await timeout(pauseTime);
+
+    token = token == info.oneBSCUSDC ? info.bscUSDC
+    : token == info.oneBSCUSDT ? info.bscUSDT
+    : token == info.oneARBUSDC ? info.arbUSDC
+    : info.arbUSDT;
+    await bridgeTokenFromHarmony(privateKey);
+    await waitforToken(chainHarm, token, privateKey);
+    await timeout(pauseTime);
+
+    await swapAllTokenInETH(privateKey);
+}
+
 
 //============================================================
 
@@ -1241,6 +1303,8 @@ const swapAllTokenInETH = async(privateKey) => {
         'Bridge USDC/USDT from Aptos -> BSC',
         'Bridge USDC/USDT from Aptos -> Arbitrum',
         'Swap USDC/USDT -> ETH in Arbitrum/BSC',
+        'Cycle BSC Swap/Core/Harmony/Swap',
+        'Cycle Arbitrum Swap/Harmony/Swap'
     ];
 
     const index = readline.keyInSelect(allStage, 'Choose stage!');
@@ -1328,11 +1392,17 @@ const swapAllTokenInETH = async(privateKey) => {
         } else if (index4 == 1) {
             await swapETHToTokenRandomARB(wallet[i]);
         } else if (index4 == 2) {
-            await bridgeTokenToCore(wallet[i]);
+            const arrTokens = [info.bscUSDT, info.bscUSDC];
+            let token = arrTokens[generateRandomAmount(0, 1, 0)];
+            await bridgeTokenToCore(token, wallet[i]);
         } else if (index4 == 3) {
             await bridgeTokenFromCore(wallet[i]);
         } else if (index4 == 4) {
-            await bridgeTokenToHarmony(wallet[i]);
+            const arrChains = [info.rpcArbitrum, info.rpcBSC];
+            const chain = arrChains[generateRandomAmount(0, 1, 0)]
+            const arrTokensHarm = chain == info.rpcBSC ? [info.bscUSDC, info.bscUSDT] : [info.arbUSDC, info.arbUSDT];
+            let token = arrTokensHarm[generateRandomAmount(0, 1, 0)];
+            await bridgeTokenToHarmony(chain, token, wallet[i]);
         } else if (index4 == 5) {
             await bridgeTokenFromHarmony(wallet[i]);
         } else if (index4 == 6) {
@@ -1349,6 +1419,10 @@ const swapAllTokenInETH = async(privateKey) => {
             await bridgeTokenFromAptos(info.chainIdArbitrum, wallet[i]);
         } else if (index4 == 12) {
             await swapAllTokenInETH(wallet[i]);
+        } else if (index4 == 13) {
+            await mainFunc('BSC', wallet[i]);
+        } else if (index4 == 14) {
+            await mainFunc('Arbitrum', wallet[i]);
         }
 
         await timeout(pauseWalletTime);
