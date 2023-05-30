@@ -984,9 +984,8 @@ const bridgeTokenToHarmony = async(arrRpc, arrToken, privateKey) => {
         let rpc = arrRpc;
         const tokens = arrToken;
         for (let i = 0; i < rpc.length; i++) {
-            let n = rpc[i] == info.rpcBSC ? 0 : 2;
             const chain = rpc[i] == info.rpcBSC ? 'BSC' : 'Arbitrum';
-            for (n; n < tokens.length; n++) {
+            for (let n = 0; n < tokens.length; n++) {
                 await getAmountToken(rpc[i], tokens[n], address).then(async(balanceToken) => {
                     const token = tokens[n] == info.bscUSDC || tokens[n] == info.arbUSDC ? 'USDC' : 'USDT';
                     const router = tokens[n] == info.bscUSDC ? info.bridgeHarmonyUSDCBSC
