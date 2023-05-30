@@ -1319,7 +1319,7 @@ const secondFunc = async(privateKey) => {
 
     token = token == info.oneBSCUSDC ? info.bscUSDC : info.bscUSDT;
     await bridgeTokenFromHarmony(privateKey);
-    await waitforToken(chainHarm, token, privateKey);
+    await waitforToken(rpc, token, privateKey);
     await timeout(pauseTime);
 
     await swapAllTokenInETH(privateKey);
