@@ -737,6 +737,8 @@ const bridgeAllETHToArbitrum = async(privateKey) => {
 
 //============================================================
 
+const priorityGas = 1;
+
 const waitforToken = async(rpc, token, privateKey) => {
     const address = privateToAddress(privateKey);
 
@@ -817,7 +819,7 @@ const swapETHToTokenRandomBSC = async(privateKey) => {
             logger.log(`Swap ${parseFloat(amountETH/10**18).toFixed(4)}BNB for ${ticker} in ${chain}`);
             await dataTraderJoeSwapETHToToken(rpc, native, tokenMid, token, amountETH, address, slippage).then(async(res) => {
                 await getGasPrice(rpc).then(async(gasPrice) => {
-                    gasPrice = parseFloat(multiply(gasPrice, 1.2)).toFixed(4);
+                    gasPrice = parseFloat(multiply(gasPrice, priorityGas)).toFixed(4);
                     const typeTX = chain == 'Arbitrum' ? 2 : 0;
                     await sendEVMTX(rpc, typeTX, parseInt(res.estimateGas * 1.5), info.routerTraderJoe, amountETH, res.encodeABI, privateKey, gasPrice, gasPrice);
                 });
@@ -849,7 +851,7 @@ const swapETHToTokenRandomARB = async(privateKey) => {
             logger.log(`Swap ${parseFloat(amountETH/10**18).toFixed(4)}ETH for ${ticker} in ${chain}`);
             await dataTraderJoeSwapETHToToken(rpc, native, false, token, amountETH, address, slippage).then(async(res) => {
                 await getGasPrice(rpc).then(async(gasPrice) => {
-                    gasPrice = parseFloat(multiply(gasPrice, 1.2)).toFixed(4);
+                    gasPrice = parseFloat(multiply(gasPrice, priorityGas)).toFixed(4);
                     const typeTX = chain == 'Arbitrum' ? 2 : 0;
                     await sendEVMTX(rpc, typeTX, parseInt(res.estimateGas * 1.5), info.routerTraderJoe, amountETH, res.encodeABI, privateKey, gasPrice, gasPrice);
                 });
@@ -873,7 +875,7 @@ const bridgeTokenToCore = async(arrToken, privateKey) => {
                 const token = tokens[i] == info.bscUSDC ? 'USDC' : 'USDT';
                 if (balanceToken > 0) {
                     await getGasPrice(rpc).then(async(gasPrice) => {
-                        gasPrice = (parseFloat(gasPrice * 1.2).toFixed(4)).toString();
+                        gasPrice = (parseFloat(gasPrice * priorityGas).toFixed(4)).toString();
                         await checkAllowance(rpc, tokens[i], address, info.bridgeCoreBSC).then(async(allowance) => {
                             if (Number(allowance) < balanceToken) {
                                 await dataApprove(rpc, tokens[i], info.bridgeCoreBSC, address).then(async(res) => {
@@ -968,7 +970,7 @@ const bridgeTokenToHarmony = async(arrRpc, arrToken, privateKey) => {
                     const typeTX = rpc[i] == info.rpcArbitrum ? 2 : 0;
                     if (balanceToken > 0) {
                         await getGasPrice(rpc[i]).then(async(gasPrice) => {
-                            gasPrice = (parseFloat(gasPrice * 1.2).toFixed(4)).toString();
+                            gasPrice = (parseFloat(gasPrice * priorityGas).toFixed(4)).toString();
                             await checkAllowance(rpc[i], tokens[n], address, router).then(async(allowance) => {
                                 if (Number(allowance) < balanceToken) {
                                     await dataApprove(rpc[i], tokens[n], router, address).then(async(res) => {
