@@ -401,7 +401,7 @@ const mainRandomBridge = async(privateKey) => {
                         await sendArbitrumTX(info.rpcArbitrum, res.estimateGas, gasPrice, gasPrice, info.routerTraderJoe, amountETH, res.encodeABI, privateKey);
                     });
                 });
-            } else if (balanceBTCb > 0) {
+            } else if (Number(balanceBTCb) > 0) {
                 console.log(chalk.magentaBright(`Balance BTCb: ${balanceBTCb / 10**8}`));
                 logger.log(`Balance BTCb: ${balanceBTCb / 10**8}`);
                 isReady = true;
@@ -449,7 +449,7 @@ const mainRandomBridge = async(privateKey) => {
                             console.log(`Wait for BTCb in ${chainNow} [Update every 3min]`);
                             logger.log(`Wait for BTCb in ${chainNow} [Update every 3min]`);
                             await timeout(180000);
-                        } else if (balanceBTCb > 0) {
+                        } else if (Number(balanceBTCb) > 0) {
                             shuffle(allChains);
                             chainTo = chainNow == allChains[0] ? allChains[1] : allChains[0];
 
