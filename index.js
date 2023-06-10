@@ -10,8 +10,6 @@ import { checkAllowance,
     getAmountToken,
     dataApprove,
     getGasPrice,
-    sendArbitrumTX,
-    sendOptimismTX,
     sendEVMTX, 
     getTokenBalanceAptos,
     getAPTBalance} from './tools/web3.js';

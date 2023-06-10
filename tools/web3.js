@@ -68,57 +68,6 @@ export const dataSendToken = async (rpc, tokenAddress, toAddress, amount, fromAd
     return { encodeABI, estimateGas };
 }
 
-export const sendArbitrumTX = async(rpc, gasLimit, maxFee, maxPriorityFee, toAddress, value, data, privateKey) => {
-    const w3 = new Web3(new Web3.providers.HttpProvider(rpc));
-    const fromAddress = privateToAddress(privateKey);
-    
-    const tx = {
-        'from': fromAddress,
-        'gas': gasLimit,
-        'maxFeePerGas': w3.utils.toWei(maxFee, 'Gwei'),
-        'maxPriorityFeePerGas': w3.utils.toWei(maxPriorityFee, 'Gwei'),
-        'chainId': await w3.eth.getChainId(),
-        'to': toAddress,
-        'nonce': await w3.eth.getTransactionCount(fromAddress),
-        'value': w3.utils.numberToHex(value),
-        'data': data
-    };
-
-    const signedTx = await w3.eth.accounts.signTransaction(tx, privateKey);
-    await w3.eth.sendSignedTransaction(signedTx.rawTransaction, async(error, hash) => {
-        if (!error) {
-            console.log(`TX: ${info.explorerArbitrum + hash}`);
-        } else {
-            console.log(`Error Tx: ${error}`);
-        }
-    });
-}
-
-export const sendOptimismTX = async(rpc, gasLimit, gasPrice, toAddress, value, data, privateKey) => {
-    const w3 = new Web3(new Web3.providers.HttpProvider(rpc));
-    const fromAddress = privateToAddress(privateKey);
-    
-    const tx = {
-        'from': fromAddress,
-        'gas': gasLimit,
-        'gasPrice': w3.utils.toWei(gasPrice, 'Gwei'),
-        'chainId': await w3.eth.getChainId(),
-        'to': toAddress,
-        'nonce': await w3.eth.getTransactionCount(fromAddress),
-        'value': w3.utils.numberToHex(value),
-        'data': data
-    };
-
-    const signedTx = await w3.eth.accounts.signTransaction(tx, privateKey);
-    await w3.eth.sendSignedTransaction(signedTx.rawTransaction, async(error, hash) => {
-        if (!error) {
-            console.log(`TX: ${info.explorerOptimism + hash}`);
-        } else {
-            console.log(`Error Tx: ${error}`);
-        }
-    });
-}
-
 export const sendEVMTX = async(rpc, typeTx, gasLimit, toAddress, value, data, privateKey, maxFeeOrGasPrice, maxPriorityFee) => {
     const w3 = new Web3(new Web3.providers.HttpProvider(rpc));
     const fromAddress = privateToAddress(privateKey);
