@@ -958,6 +958,7 @@ const secondFunc = async(privateKey) => {
         'Bridge ETH Arbitrum -> Optimism -> Arbitrum',
         //'Random Bridge BTC/ETH Arbitrum -> Optimism -> Arbitrum', //NEED CHANGE*/
         'Main RANDOM',
+        'Swap ETH -> BTCb Arbitrum',
     ];
     const allBridge = [
         'Bridge BTC from Arbitrum to Optimism',
@@ -1051,6 +1052,8 @@ const secondFunc = async(privateKey) => {
             }
         }*/ else if (index1 == 3) {
             await mainRandomBridge(wallet[i]);
+        } else if (index1 == 4) {
+            await swapETHToBTCbArbitrum(wallet[i]);
         } else if (index2 == 0) { //ALL BRIDGE
             await bridgeBTCToChain(info.rpcArbitrum, info.chainIdOptimism, 2, amountGasFromArb, 0, wallet[i]);
         } else if (index2 == 1) {
