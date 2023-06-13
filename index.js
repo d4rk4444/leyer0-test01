@@ -1076,7 +1076,7 @@ const secondFunc = async(privateKey) => {
             await approveBridgeAvalanche(wallet[i]);
             await bridgeBTCToChain(info.rpcAvalanche, info.chainIdArbitrum, 2, amountGasToArb, 0, wallet[i]);
         } else if (index3 == 0) { //POST
-            await swapBTCBToETH(wallet[i]);
+            await swapBTCbToETHArbitrum(wallet[i]);
         } else if (index3 == 1) {
             await bridgeAllETHToArbitrum(wallet[i]);
         } else if (index4 == 0) { //OTHER
