@@ -267,7 +267,6 @@ const swapBTCbToETHArbitrum = async(privateKey) => {
                         });
                     });
                 } else if (Number(res) >= amountBTCb) {
-                    isReady = true;
                     console.log(chalk.magentaBright(`Approve BTCb Successful`));
                     logger.log(`Approve BTCb Successful`);
                     await timeout(pauseTime);
