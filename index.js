@@ -322,7 +322,7 @@ const bridgeETHToArbitrum = async(privateKey) => {
     const address = privateToAddress(privateKey);
     
     await getETHAmount(info.rpcOptimism, address).then(async(balanceETH) => {
-        const amountETH = subtract(balanceETH, process.env.AMOUNT_ETH_OP_MIN * 10**18);
+        const amountETH = subtract(balanceETH, generateRandomAmount(process.env.AMOUNT_ETH_OP_MIN * 10**18, process.env.AMOUNT_ETH_OP_MAX * 10**18, 0));
         await feeBridgeStargate(info.rpcOptimism, 110, info.StargateRouterOptimism, 0, 0, address).then(async(bridgeFee) => {
             const value = (add(amountETH, bridgeFee)).toString();
             await dataBridgeETH(info.rpcOptimism, 110, amountETH, value, info.ETHRouterOptimism, address).then(async(res) => {
