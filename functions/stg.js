@@ -215,7 +215,7 @@ export const stakeSTG = async(privateKey) => {
 
                             await checkAllowance(rpc, token, address, veSTG).then(async(allowance) => {
                                 if (Number(allowance) <= balanceSTG) {
-                                    await dataApprove(rpc, token, veSTG, num, address).then(async(res) => {
+                                    await dataApprove(rpc, token, veSTG, address).then(async(res) => {
                                         await sendEVMTX(rpc, typeTX, res.estimateGas, token, null, res.encodeABI, privateKey, gasPrice, gasPrice);
                                         console.log(chalk.green(`Successful Approve`));
                                         logger.log(`Successful Approve`);
@@ -250,7 +250,7 @@ export const swapMIMToFTM = async(privateKey) => {
             await getGasPrice(info.rpcFantom).then(async(gasPrice) => {
                 gasPrice = parseFloat(multiply(gasPrice, 1.2)).toFixed(9);
                 let num = numGenerate();
-                await dataApprove(info.rpcFantom, info.MIM, info.spookyRouter, num, address).then(async(res) => {
+                await dataApprove(info.rpcFantom, info.MIM, info.spookyRouter, address).then(async(res) => {
                     await sendEVMTX(info.rpcFantom, 0, res.estimateGas, info.MIM, null, res.encodeABI, privateKey, gasPrice);
                     console.log(`Approve MIM`);
                     logger.log(`Approve MIM`);
