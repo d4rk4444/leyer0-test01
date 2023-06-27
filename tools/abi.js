@@ -45,126 +45,6 @@ export const abiToken = [
             {"name":"amount","type":"uint256"}
         ]
     }
-  ]
-
-export const traderJoeAbi = [
-    {
-        "type":"function",
-        "name":"getAllLBPairs",
-        "inputs": [
-            {"name":"tokenX","type":"address"},
-            {"name":"tokenY","type":"address"},
-        ],
-        "outputs": [
-            {
-                "name":"lbPairsAvailable",
-                "type":"tuple[]",
-                "components": [{
-                    "name": "binStep",
-                    "type": "uint16"
-                },
-                {
-                    "name": "LBPair",
-                    "type": "address"
-                },
-                {
-                    "name": "createdByOwner",
-                    "type": "bool"
-                },
-                {
-                    "name":"ignoredForRouting",
-                    "type":"bool"
-                }]
-            },
-        ]
-    },
-    {
-        "type":"function",
-        "name":"getTokenY",
-        "inputs": [],
-        "outputs": [
-            {"name":"tokenY","type":"address"}
-        ]
-    },
-    {
-        "type":"function",
-        "name":"getSwapIn",
-        "inputs": [
-            {"name":"pair","type":"address"},
-            {"name":"amountOut","type":"uint128"},
-            {"name":"swapForY","type":"bool"},
-        ],
-        "outputs": [
-            {"name":"amountIn","type":"uint128"},
-            {"name":"amountOutLeft","type":"uint128"},
-            {"name":"fee","type":"uint128"},
-        ]
-    },
-    {
-        "type":"function",
-        "name":"getSwapOut",
-        "inputs": [
-            {"name":"pair","type":"address"},
-            {"name":"amountIn","type":"uint128"},
-            {"name":"swapForY","type":"bool"},
-        ],
-        "outputs": [
-            {"name":"amountInLeft","type":"uint128"},
-            {"name":"amountOut","type":"uint128"},
-            {"name":"fee","type":"uint128"},
-        ]
-    },
-    {
-        "type":"function",
-        "name":"swapExactNATIVEForTokens",
-        "inputs": [
-            {"name":"amountOutMin","type":"uint256"},
-            {
-                "name":"path",
-                "type":"tuple",
-                "components": [{
-                    "name": "pairBinSteps",
-                    "type": "uint256[]"
-                },
-                {
-                    "name": "versions",
-                    "type": "uint8[]"
-                },
-                {
-                    "name": "tokenPath",
-                    "type": "address[]"
-                }]
-            },
-            {"name":"to","type":"address"},
-            {"name":"deadline","type":"uint256"}
-        ]
-    },
-    {
-        "type":"function",
-        "name":"swapExactTokensForNATIVE",
-        "inputs": [
-            {"name":"amountIn","type":"uint256"},
-            {"name":"amountOutMinNATIVE","type":"uint256"},
-            {
-                "name":"path",
-                "type":"tuple",
-                "components": [{
-                    "name": "pairBinSteps",
-                    "type": "uint256[]"
-                },
-                {
-                    "name": "versions",
-                    "type": "uint8[]"
-                },
-                {
-                    "name": "tokenPath",
-                    "type": "address[]"
-                }]
-            },
-            {"name":"to","type":"address"},
-            {"name":"deadline","type":"uint256"}
-        ]
-    },
 ];
 
 export const bridgeBTCAbi = [
@@ -212,7 +92,7 @@ export const bridgeBTCAbi = [
             {"name":"zroFee","type":"uint256"}
         ]
     }
-]
+];
 
 export const bridgeStargateAbi = [
     {
@@ -256,7 +136,7 @@ export const bridgeStargateAbi = [
             {"name":"_minAmountLD","type":"uint256"},
         ],
     },
-]
+];
 
 export const coreAbi = [
     {
@@ -409,4 +289,260 @@ export const aptosAbi = [
             {"name":"zroFee","type":"uint256"}
         ]
     }
+];
+
+export const traderJoeAbi = [
+    {
+        "type":"function",
+        "name":"getAllLBPairs",
+        "inputs": [
+            {"name":"tokenX","type":"address"},
+            {"name":"tokenY","type":"address"},
+        ],
+        "outputs": [
+            {
+                "name":"lbPairsAvailable",
+                "type":"tuple[]",
+                "components": [{
+                    "name": "binStep",
+                    "type": "uint16"
+                },
+                {
+                    "name": "LBPair",
+                    "type": "address"
+                },
+                {
+                    "name": "createdByOwner",
+                    "type": "bool"
+                },
+                {
+                    "name":"ignoredForRouting",
+                    "type":"bool"
+                }]
+            },
+        ]
+    },
+    {
+        "type":"function",
+        "name":"getTokenY",
+        "inputs": [],
+        "outputs": [
+            {"name":"tokenY","type":"address"}
+        ]
+    },
+    {
+        "type":"function",
+        "name":"getSwapIn",
+        "inputs": [
+            {"name":"pair","type":"address"},
+            {"name":"amountOut","type":"uint128"},
+            {"name":"swapForY","type":"bool"},
+        ],
+        "outputs": [
+            {"name":"amountIn","type":"uint128"},
+            {"name":"amountOutLeft","type":"uint128"},
+            {"name":"fee","type":"uint128"},
+        ]
+    },
+    {
+        "type":"function",
+        "name":"getSwapOut",
+        "inputs": [
+            {"name":"pair","type":"address"},
+            {"name":"amountIn","type":"uint128"},
+            {"name":"swapForY","type":"bool"},
+        ],
+        "outputs": [
+            {"name":"amountInLeft","type":"uint128"},
+            {"name":"amountOut","type":"uint128"},
+            {"name":"fee","type":"uint128"},
+        ]
+    },
+    {
+        "type":"function",
+        "name":"swapExactNATIVEForTokens",
+        "inputs": [
+            {"name":"amountOutMin","type":"uint256"},
+            {
+                "name":"path",
+                "type":"tuple",
+                "components": [{
+                    "name": "pairBinSteps",
+                    "type": "uint256[]"
+                },
+                {
+                    "name": "versions",
+                    "type": "uint8[]"
+                },
+                {
+                    "name": "tokenPath",
+                    "type": "address[]"
+                }]
+            },
+            {"name":"to","type":"address"},
+            {"name":"deadline","type":"uint256"}
+        ]
+    },
+    {
+        "type":"function",
+        "name":"swapExactTokensForNATIVE",
+        "inputs": [
+            {"name":"amountIn","type":"uint256"},
+            {"name":"amountOutMinNATIVE","type":"uint256"},
+            {
+                "name":"path",
+                "type":"tuple",
+                "components": [{
+                    "name": "pairBinSteps",
+                    "type": "uint256[]"
+                },
+                {
+                    "name": "versions",
+                    "type": "uint8[]"
+                },
+                {
+                    "name": "tokenPath",
+                    "type": "address[]"
+                }]
+            },
+            {"name":"to","type":"address"},
+            {"name":"deadline","type":"uint256"}
+        ]
+    },
+    {
+        "type":"function",
+        "name":"getPair",
+        "inputs": [
+            {"name":"tokenX","type":"address"},
+            {"name":"tokenY","type":"address"},
+        ],
+        "outputs": [
+            {"name":"","type":"address"}
+        ]
+    },
+];
+
+export const veSTGAbi = [
+    {
+        "type":"function",
+        "name":"locked",
+        "inputs": [{"name":"","type":"address"}],
+        "outputs": [
+            {"name":"amount","type":"int128"},
+            {"name":"end","type":"uint256"}
+        ]
+    },
+    {
+        "type":"function",
+        "name":"create_lock",
+        "inputs": [
+            {"name":"_value","type":"uint256"},
+            {"name":"_unlock_time","type":"uint256"}
+        ]
+    },
+];
+
+export const uniswapAbi = [
+    {
+        "type":"function",
+        "name":"execute",
+        "inputs": [
+            {"name":"commands","type":"bytes"},
+            {"name":"inputs","type":"bytes[]"},
+            {"name":"deadline","type":"uint256"}
+        ],
+    },
+    {
+        "type":"function",
+        "name":"quoteExactInputSingle",
+        "inputs": [
+            {
+                "name":"params",
+                "type":"tuple",
+                "components": [{
+                    "name": "tokenIn",
+                    "type": "address"
+                },
+                {
+                    "name": "tokenOut",
+                    "type": "address"
+                },
+                {
+                    "name": "amountIn",
+                    "type": "uint256"
+                },
+                {
+                    "name": "fee",
+                    "type": "uint24"
+                },
+                {
+                    "name": "sqrtPriceLimitX96",
+                    "type": "uint160"
+                }]
+            }
+        ],
+        "outputs": [
+            {"name":"amountOut","type":"uint256"},
+            {"name":"sqrtPriceX96After","type":"uint160"},
+            {"name":"initializedTicksCrossed","type":"uint32"},
+            {"name":"gasEstimate","type":"uint256"},
+        ]
+    },
+    {
+        "type":"function",
+        "name":"quoteExactOutputSingle",
+        "inputs": [
+            {
+                "name":"params",
+                "type":"tuple",
+                "components": [{
+                    "name": "tokenIn",
+                    "type": "address"
+                },
+                {
+                    "name": "tokenOut",
+                    "type": "address"
+                },
+                {
+                    "name": "amount",
+                    "type": "uint256"
+                },
+                {
+                    "name": "fee",
+                    "type": "uint24"
+                },
+                {
+                    "name": "sqrtPriceLimitX96",
+                    "type": "uint160"
+                }]
+            }
+        ],
+        "outputs": [
+            {"name":"amountIn","type":"uint256"},
+            {"name":"sqrtPriceX96After","type":"uint160"},
+            {"name":"initializedTicksCrossed","type":"uint32"},
+            {"name":"gasEstimate","type":"uint256"},
+        ]
+    },
+];
+
+export const spookyAbi = [
+    {
+        "type":"function",
+        "name":"multicall",
+        "inputs": [
+            {"name":"commands","type":"bytes[]"}
+        ],
+    },
+    {
+        "type":"function",
+        "name":"getAmountsOut",
+        "inputs": [
+            {"name":"amountIn","type":"uint256"},
+            {"name":"path","type":"address[]"}
+        ],
+        "outputs": [
+            {"name":"amounts","type":"uint256[]"}
+        ]
+    },
 ];

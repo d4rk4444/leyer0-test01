@@ -26,6 +26,7 @@ import { mintHoloNFT } from './tools/NFT.js';
 import { dataBridgeCore, feeBridgeCore } from './tools/coredao.js';
 import { dataBridgeHarmony, feeBridgeHarmony, lzAdapterParamsHarmony } from './tools/harmony.js';
 import { claimTokenBridgeAptos, dataBridgeTokenFromAptos, dataBridgeTokenToAptos, feeBridgeAptos } from './tools/aptos.js';
+import { checkStakeAmount, stakeSTG, swapETHToToken, swapETHToTokenAmount, swapETHToTokenOptimism, swapFTMToMIM, swapMIMToFTM } from './functions/stg.js';
 dotenv.config();
 
 const output = fs.createWriteStream(`history.log`, { flags: 'a' });
@@ -949,7 +950,8 @@ const secondFunc = async(privateKey) => {
         'MAIN',
         'ALL BRIDGE',
         'POST',
-        'OTHER'
+        'OTHER',
+        'STG',
     ];
     const mainStage = [
         'Send Fee to Optimism',
@@ -995,12 +997,23 @@ const secondFunc = async(privateKey) => {
         'FIRST Func swap/core/bsc',
         'SECOND Func harmony/bsc/swap',
     ];
+    const stgStage = [
+        'Swap ETH -> STG in Random Chain',
+        'Swap ETH -> STG Arbitrum Amount',
+        'Stake STG',
+        'Check Stake Amount',
+        'Swap ETH -> STG Arbitrum Amount',
+        //'Unstake STG',
+        'Swap FTM -> MIM',
+        'Swap MIM -> FTM',
+    ];
 
     const index = readline.keyInSelect(allStage, 'Choose stage!');
     let index1;
     let index2;
     let index3;
     let index4;
+    let index5;
     if (index == -1) { process.exit() };
     console.log(chalk.green(`Start ${allStage[index]}`));
     logger.log(`Start ${allStage[index]}`);
@@ -1024,6 +1037,11 @@ const secondFunc = async(privateKey) => {
         if (index4 == -1) { process.exit() };
         console.log(chalk.green(`Start ${otherStage[index4]}`));
         logger.log(`Start ${otherStage[index4]}`);
+    } else if (index == 4) {
+        index5 = readline.keyInSelect(stgStage, 'Choose stage!');
+        if (index5 == -1) { process.exit() };
+        console.log(chalk.green(`Start ${stgStage[index5]}`));
+        logger.log(`Start ${stgStage[index5]}`);
     }
     
     for (let i = 0; i < wallet.length; i++) {
@@ -1120,6 +1138,23 @@ const secondFunc = async(privateKey) => {
         } else if (index4 == 17) {
             await secondFunc(wallet[i]);
         } 
+
+        if (index5 == 0) {
+            await swapETHToToken(wallet[i]);
+        } else if (index5 == 1) {
+            await swapETHToTokenAmount(wallet[i]);
+        } else if (index5 == 2) {
+            await stakeSTG(wallet[i]);
+        } else if (index5 == 3) {
+            pauseWalletTime = 0;
+            await checkStakeAmount(wallet[i]);
+        } else if (index5 == 4) {
+            await swapETHToTokenOptimism(wallet[i]);
+        } else if (index5 == 5) {
+            await swapFTMToMIM(wallet[i]);
+        } else if (index5 == 6) {
+            await swapMIMToFTM(wallet[i]);
+        }
 
         await timeout(pauseWalletTime);
     }

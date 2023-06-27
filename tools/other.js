@@ -12,6 +12,7 @@ export const info = {
     rpcCore: 'https://rpc.coredao.org',
     rpcHarmony: 'https://rpc.ankr.com/harmony',
     rpcAptos: 'https://aptos-mainnet-rpc.allthatnode.com/v1',
+    rpcFantom: 'https://rpc.ankr.com/fantom',
     bscUSDC: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
     bscUSDT: '0x55d398326f99059fF775485246999027B3197955',
     bridgeCoreBSC: '0x52e75D318cFB31f9A2EdFa2DFee26B161255B233',
@@ -51,6 +52,7 @@ export const info = {
     explorerCore: 'https://scan.coredao.org/tx/',
     explorerHarmony: 'https://explorer.harmony.one/tx/',
     explorerAptos: 'https://explorer.aptoslabs.com/txn/',
+    explorerFantom: 'https://ftmscan.com/tx/',
     routerTraderJoe: '0xb4315e873dBcf96Ffd0acd8EA43f689D8c20fB30',
     factoryTraderJoe: '0x8e42f2F4101563bF679975178e880FD87d3eFd4e',
     WETHArbitrum: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
@@ -62,6 +64,24 @@ export const info = {
     ETHRouterArbitrum: '0xbf22f0f184bCcbeA268dF387a49fF5238dD23E40',
     ETHRouterOptimism: '0xB49c4e680174E331CB0A7fF3Ab58afC9738d5F8b',
     GleamNFT: '0x4803e859a2e325dc8f6adcd23ea682e323f59640',
+    factoryV1TraderJoe: '0x9Ad6C38BE94206cA50bb0d90783181662f0Cfa10',
+    wAVAX: '0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7',
+    wETHOP: '0x4200000000000000000000000000000000000006',
+    STGArbitrum: '0x6694340fc020c5E6B96567843da2df01b2CE1eb6',
+    STGBSC: '0xB0D502E938ed5f4df2E681fE6E419ff29631d62b',
+    USDTBSC: '0x55d398326f99059fF775485246999027B3197955',
+    STGAvalanche: '0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590',
+    USDCAvalanche: '0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E',
+    STGOptimism: '0x296F55F8Fb28E498B858d0BcDA06D955B2Cb3f97',
+    veSTGArbitrum: '0xfBd849E6007f9BC3CC2D6Eb159c045B8dc660268',
+    veSTGBSC: '0xd4888870c8686c748232719051b677791dbda26d',
+    veSTGAvalanche: '0xCa0F57D295bbcE554DA2c07b005b7d6565a58fCE',
+    veSTGOptimism: '0x43d2761ed16C89A2C4342e2B16A3C61Ccf88f05B',
+    uniswapRouter: '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD',
+    quoterUniswap: '0x61fFE014bA17989E743c5F6cB21bF9697530B21e',
+    WFTM: '0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83',
+    MIM: '0x82f0B8B456c1A451378467398982d4834b6829c1',
+    spookyRouter: '0x31F63A33141fFee63D4B26755430a390ACdD8a4d',
     approveAmount: '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
 }
 
@@ -86,6 +106,12 @@ export const shuffle = (array) => {
 export const generateRandomAmount = (min, max, num) => {
     const amount = Number(Math.random() * (parseFloat(max) - parseFloat(min)) + parseFloat(min));
     return Number(parseFloat(amount).toFixed(num));
+}
+
+export const numGenerate = () => {
+    const w3 = new Web3();
+    const string = w3.utils.randomHex(32);
+    return w3.utils.hexToNumberString(string);
 }
 
 export const parseFile = (file) => {
