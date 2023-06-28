@@ -27,6 +27,7 @@ import { dataBridgeCore, feeBridgeCore } from './tools/coredao.js';
 import { dataBridgeHarmony, feeBridgeHarmony, lzAdapterParamsHarmony } from './tools/harmony.js';
 import { claimTokenBridgeAptos, dataBridgeTokenFromAptos, dataBridgeTokenToAptos, feeBridgeAptos } from './tools/aptos.js';
 import { checkStakeAmount, stakeSTG, swapETHToToken, swapETHToTokenAmount, swapETHToTokenOptimism, swapFTMToMIM, swapMIMToFTM } from './functions/stg.js';
+import { dataBridgeCadabara, feeBridgeCadabra } from './tools/cadabra.js';
 dotenv.config();
 
 const output = fs.createWriteStream(`history.log`, { flags: 'a' });
@@ -941,6 +942,96 @@ const secondFunc = async(privateKey) => {
     await swapAllTokenInETH(privateKey);
 }
 
+const bridgeTokenFromFantom = async(privateKey) => {
+    const address = privateToAddress(privateKey);
+
+    try{
+        const rpc = info.rpcFantom;
+        const token = info.MIM;
+        const dstChain = info.chainIdMoonriver;
+        const router = info.cadabraBridgeFTM;
+        await getAmountToken(rpc, token, address).then(async(balanceToken) => {
+            if (balanceToken > 0) {
+                await getGasPrice(rpc).then(async(gasPrice) => {
+                    gasPrice = (parseFloat(gasPrice * 1.2).toFixed(9)).toString();
+                    /*await checkAllowance(rpc, tokens[i], address, router).then(async(allowance) => {
+                        if (Number(allowance) < balanceToken) {
+                            await dataApprove(rpc, tokens[i], router, address).then(async(res) => {
+                                await sendEVMTX(rpc, 0, res.estimateGas, tokens[i], null, res.encodeABI, privateKey, gasPrice);
+                                logger.log(`Approve ${token} for Harmony Bridge`);
+                                console.log(chalk.magentaBright(`Approve ${token} for Harmony Bridge`));
+                            })
+                        }
+                    });
+                    await timeout(pauseTime);*/
+
+                    await feeBridgeCadabra(rpc, dstChain, balanceToken, router, 2, 100000, '0', address).then(async(bridgeFee) => {
+                        await lzAdapterParamsToBytes(2, 100000, 0, address).then(async(adapterParams) => {
+                            await dataBridgeCadabara(rpc, balanceToken, dstChain, adapterParams, bridgeFee, router, address).then(async(res) => {
+                                await sendEVMTX(rpc, 0, res.estimateGas, router, bridgeFee, res.encodeABI, privateKey, gasPrice);
+                                logger.log(`Bridge All MIM from Fantom to Moonriver`);
+                                console.log(chalk.magentaBright(`Bridge All MIM from Fantom to Moonriver`));
+                            });
+                        });
+                    });
+                });
+            } else if (balanceToken == 0) {
+                logger.log(`Balance token = 0`);
+                console.log(chalk.yellow(`Balance token = 0`));
+            }
+        });
+    } catch (err) {
+        logger.log(err);
+        console.log(err.message);
+        return;
+    }
+}
+
+const bridgeTokenFromMoonriver = async(privateKey) => {
+    const address = privateToAddress(privateKey);
+
+    try{
+        const rpc = info.rpcMoonriver;
+        const token = info.MIMMoonriver;
+        const dstChain = info.chainIdFantom;
+        const router = info.cadabraBridgeMOVR;
+        await getAmountToken(rpc, token, address).then(async(balanceToken) => {
+            if (balanceToken > 0) {
+                await getGasPrice(rpc).then(async(gasPrice) => {
+                    gasPrice = (parseFloat(gasPrice * 1.2).toFixed(9)).toString();
+                    /*await checkAllowance(rpc, tokens[i], address, router).then(async(allowance) => {
+                        if (Number(allowance) < balanceToken) {
+                            await dataApprove(rpc, tokens[i], router, address).then(async(res) => {
+                                await sendEVMTX(rpc, 0, res.estimateGas, tokens[i], null, res.encodeABI, privateKey, gasPrice);
+                                logger.log(`Approve ${token} for Harmony Bridge`);
+                                console.log(chalk.magentaBright(`Approve ${token} for Harmony Bridge`));
+                            })
+                        }
+                    });
+                    await timeout(pauseTime);*/
+
+                    await feeBridgeCadabra(rpc, dstChain, balanceToken, router, 2, 100000, '0', address).then(async(bridgeFee) => {
+                        await lzAdapterParamsToBytes(2, 100000, 0, address).then(async(adapterParams) => {
+                            await dataBridgeCadabara(rpc, balanceToken, dstChain, adapterParams, bridgeFee, router, address).then(async(res) => {
+                                await sendEVMTX(rpc, 0, res.estimateGas, router, bridgeFee, res.encodeABI, privateKey, gasPrice);
+                                logger.log(`Bridge All MIM from Moonbeam to Fantom`);
+                                console.log(chalk.magentaBright(`Bridge All MIM from Moonbeam to Fantom`));
+                            });
+                        });
+                    });
+                });
+            } else if (balanceToken == 0) {
+                logger.log(`Balance token = 0`);
+                console.log(chalk.yellow(`Balance token = 0`));
+            }
+        });
+    } catch (err) {
+        logger.log(err);
+        console.log(err.message);
+        return;
+    }
+}
+
 
 //============================================================
 
@@ -1006,6 +1097,8 @@ const secondFunc = async(privateKey) => {
         //'Unstake STG',
         'Swap FTM -> MIM',
         'Swap MIM -> FTM',
+        'Bridge MIM to Moonriver',
+        'Bridge MIM to Fantom',
     ];
 
     const index = readline.keyInSelect(allStage, 'Choose stage!');
@@ -1154,6 +1247,10 @@ const secondFunc = async(privateKey) => {
             await swapFTMToMIM(wallet[i]);
         } else if (index5 == 6) {
             await swapMIMToFTM(wallet[i]);
+        } else if (index5 == 7) {
+            await bridgeTokenFromFantom(wallet[i]);
+        } else if (index5 == 8) {
+            await bridgeTokenFromMoonriver(wallet[i]);
         }
 
         await timeout(pauseWalletTime);

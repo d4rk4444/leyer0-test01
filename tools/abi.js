@@ -546,3 +546,47 @@ export const spookyAbi = [
         ]
     },
 ];
+
+export const cadabraAbi = [
+    {
+        "type":"function",
+        "name":"sendFrom",
+        "inputs": [
+            {"name":"_from","type":"address"},
+            {"name":"_dstChainId","type":"uint16"},
+            {"name":"_toAddress","type":"bytes32"},
+            {"name":"_amount","type":"uint256"},
+            {
+                "name":"_callParams",
+                "type":"tuple",
+                "components": [{
+                    "name": "refundAddress",
+                    "type": "address"
+                },
+                {
+                    "name": "zroPaymentAddress",
+                    "type": "address"
+                },
+                {
+                    "name": "adapterParams",
+                    "type": "bytes"
+                }]
+            }
+        ]
+    },
+    {
+        "type":"function",
+        "name":"estimateSendFee",
+        "inputs": [
+            {"name":"_dstChainId","type":"uint16"},
+            {"name":"_toAddress","type":"bytes32"},
+            {"name":"_amount","type":"uint256"},
+            {"name":"_useZro","type":"bool"},
+            {"name":"_adapterParams","type":"bytes"}
+        ],
+        "outputs": [
+            {"name":"nativeFee","type":"uint256"},
+            {"name":"zroFee","type":"uint256"}
+        ]
+    }
+];
