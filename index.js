@@ -156,7 +156,7 @@ const bridgeBTCToChain = async(rpcFrom, chainIdTo, lzVersion, lzGasLimit, lzNati
                         : rpcFrom == info.rpcAvalanche ? '1.5'
                         : gasPrice;
                     const typeTX = rpcFrom == info.rpcArbitrum || rpcFrom == info.rpcPolygon || rpcFrom == info.rpcAvalanche ? 2 : 0;
-                    await sendEVMTX(rpcFrom, typeTX, res.estimateGas, info.BTCb, bridgeFee, res.encodeABI, privateKey, gasPrice, priorityFee);
+                    await sendEVMTX(rpcFrom, typeTX, parseInt(res.estimateGas * 1.5), info.BTCb, bridgeFee, res.encodeABI, privateKey, gasPrice, priorityFee);
                     console.log(chalk.magentaBright(`Successful Bridge from ${chainFrom} to ${chainTo}`));
                     logger.log(`Successful Bridge from ${chainFrom} to ${chainTo}`);
                 });
@@ -383,9 +383,9 @@ const waitforToken = async(rpc, token, privateKey) => {
         while(!status) {
             await getAmountToken(rpc, token, address).then(async(balance) => {
                 if (balance == 0) {
-                    console.log('Wait for Token. Update every 2 min');
-                    logger.log('Wait for Token. Update every 2 min');
-                    await timeout(120000);
+                    console.log('Wait for Token. Update every 1 min');
+                    logger.log('Wait for Token. Update every 1 min');
+                    await timeout(60000);
                 } else if (balance > 0) {
                     console.log(chalk.magentaBright('Find token!'));
                     logger.log('Find token!');
@@ -952,6 +952,7 @@ const bridgeTokenFromFantom = async(privateKey) => {
         const router = info.cadabraBridgeFTM;
         await getAmountToken(rpc, token, address).then(async(balanceToken) => {
             if (balanceToken > 0) {
+                balanceToken = parseInt(multiply(balanceToken, divide(0.75, process.env.NUMBER_CIRCLES_MAX)));
                 await getGasPrice(rpc).then(async(gasPrice) => {
                     gasPrice = (parseFloat(gasPrice * 1.2).toFixed(9)).toString();
                     /*await checkAllowance(rpc, tokens[i], address, router).then(async(allowance) => {
@@ -1098,6 +1099,7 @@ const bridgeTokenFromMoonriver = async(privateKey) => {
         'Swap FTM -> MIM',
         'Swap MIM -> FTM',
         'Bridge MIM to Moonriver',
+        'Bridge MIM to Moonriver CYCLES Random',
         'Bridge MIM to Fantom',
     ];
 
@@ -1250,6 +1252,10 @@ const bridgeTokenFromMoonriver = async(privateKey) => {
         } else if (index5 == 7) {
             await bridgeTokenFromFantom(wallet[i]);
         } else if (index5 == 8) {
+            for (let i = 0; i < generateRandomAmount(process.env.NUMBER_CIRCLES_MIN, process.env.NUMBER_CIRCLES_MAX); i++) {
+                await bridgeTokenFromFantom(wallet[i]);
+            }
+        } else if (index5 == 9) {
             await bridgeTokenFromMoonriver(wallet[i]);
         }
 
