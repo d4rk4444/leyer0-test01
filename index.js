@@ -1252,7 +1252,7 @@ const bridgeTokenFromMoonriver = async(privateKey) => {
         } else if (index5 == 7) {
             await bridgeTokenFromFantom(wallet[i]);
         } else if (index5 == 8) {
-            for (let i = 0; i < generateRandomAmount(process.env.NUMBER_CIRCLES_MIN, process.env.NUMBER_CIRCLES_MAX); i++) {
+            for (let n = 0; n < generateRandomAmount(process.env.NUMBER_CIRCLES_MIN, process.env.NUMBER_CIRCLES_MAX); n++) {
                 await bridgeTokenFromFantom(wallet[i]);
             }
         } else if (index5 == 9) {
