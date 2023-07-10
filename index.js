@@ -268,6 +268,7 @@ const swapBTCbToETHArbitrum = async(privateKey) => {
                             await sendEVMTX(info.rpcArbitrum, 2, res1.estimateGas, info.BTCb, null, res1.encodeABI, privateKey, gasPrice, gasPrice);
                         });
                     });
+                    await timeout(pauseTime);
                 } else if (Number(res) >= amountBTCb) {
                     console.log(chalk.magentaBright(`Approve BTCb Successful`));
                     logger.log(`Approve BTCb Successful`);
